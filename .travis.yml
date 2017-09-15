@@ -1,0 +1,10 @@
+language: node_js
+node_js:
+  - '6'
+  - '8'
+install:
+  - 'npm i -g npm@next'
+  - 'npm install'
+script:
+  - 'npm run clean-build'
+
