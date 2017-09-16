@@ -34,6 +34,7 @@
     "coffeescript": "^1.12.7",
     "mocha": "^3.5.3",
     "should": "^13.0.1",
+    "should-sinon": "0.0.6",
     "sinon": "^3.2.1",
     "typescript": "^2.5.2"
   }
