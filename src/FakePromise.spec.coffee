@@ -9,11 +9,12 @@ describe "FakePromise", ->
 
   beforeEach ->
     testedPromise = new FakePromise
+    undefined
 
   describe "just after creation", ->
     errorTests = [
-      [ "resolve", ".resolve(...) called without any callback specified" ]
-      [ "reject", ".reject(...) called without any callback specified" ]
+      [ "resolve", ".resolve(...) called without .then(...) callback specified" ]
+      [ "reject", ".reject(...) called without .then(...) callback specified" ]
     ]
     errorTests.forEach (params) ->
       [ methodName, expectedError ] = params
@@ -27,6 +28,7 @@ describe "FakePromise", ->
     beforeEach ->
       thenCallback = sinon.spy()
       testedPromise.then thenCallback
+      undefined
 
     describe "and after calling .resolve(arg)", ->
       arg = "promises, promises"
@@ -35,5 +37,5 @@ describe "FakePromise", ->
         testedPromise.resolve arg
 
       it "calls proper callback", ->
-        thenCallback.have.callCount 1
+        thenCallback.should.have.callCount 1
 
