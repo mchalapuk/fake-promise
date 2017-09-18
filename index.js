@@ -1,6 +1,7 @@
-import FakePromise from 'lib/fake-promise';
+const FakePromise = require('./lib/FakePromise').default;
 
-export FakePromise;
-export FakePromise as Promise;
-export default FakePromise;
+module.exports = Object.assign(
+  FakePromise,
+  { default: FakePromise, Promise: FakePromise, FakePromise }
+);
 
