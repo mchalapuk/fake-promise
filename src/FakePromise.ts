@@ -10,6 +10,7 @@ export class FakePromise<T> implements Promise<T> {
 
   private result : T;
   private error : any;
+  private resultSet = false;
 
   private resolved = false;
 
@@ -36,8 +37,9 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   setResult(result : T) {
-    check(this.result === undefined, 'result already set');
+    check(!this.resultSet, 'result already set');
     this.result = result;
+    this.resultSet = true;
     return this;
   }
 
@@ -46,7 +48,7 @@ export class FakePromise<T> implements Promise<T> {
       this.setResult(result);
     }
 
-    check(this.result !== undefined, '.resove() called before .setResult(...)');
+    check(this.resultSet, '.resove() called before .setResult(...)');
     this.markResolved();
 
     const next = this.nextPromise as FakePromise<any>;

@@ -35,6 +35,10 @@ describe "FakePromise", ->
       should -> testedPromise.catch thenCallback
         .throw new Error "promise already specified"
 
+    it ".setResult(undefined).resolve() doesn't throw", ->
+      (testedPromise.setResult undefined).resolve()
+      undefined
+
     describe "and after calling .resolve(arg)", ->
       arg = "I will behave"
 
