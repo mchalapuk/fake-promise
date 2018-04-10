@@ -11,13 +11,68 @@ describe "FakePromise", ->
     testedPromise = new FakePromise
     undefined
 
-  describe "just after creation", ->
-    it "throws when calling .resolve(...)", ->
-      should -> testedPromise.resolve null
-        .throw new Error "promise not specified"
-    it "throws when calling .reject(...)", ->
-      should -> testedPromise.reject null
-        .throw new Error "promise not specified"
+  describe "when after calling .resolve(null)", ->
+    nextPromise = null
+
+    beforeEach ->
+      nextPromise = testedPromise.resolve null
+      undefined
+
+    it "calling .then(callback) calls the callback immediately", ->
+      callback = sinon.spy()
+      testedPromise.then callback
+      callback.should.have.callCount 1
+        .and.have.been.calledWith null
+
+    it "calling .catch(callback) does nothing", ->
+      callback = sinon.spy()
+      testedPromise.catch callback
+      callback.should.have.callCount 0
+
+    describe "and after calling .resolve(null).resolve()", ->
+      beforeEach ->
+        nextPromise.resolve()
+        undefined
+
+      it "calling .then(passThrough).then(callback) calls the callback immediately", ->
+        callback = sinon.spy()
+        testedPromise
+          .then (arg) -> arg
+          .then callback
+        callback.should.have.callCount 1
+          .and.have.been.calledWith null
+
+  describe "when after calling .reject(error)", ->
+    error = new Error "test"
+    nextPromise = null
+
+    beforeEach ->
+      nextPromise = testedPromise.reject error
+      undefined
+
+    it "calling .catch(callback) calls the callback immediately", ->
+      callback = sinon.spy()
+      testedPromise.catch callback
+      callback.should.have.callCount 1
+        .and.have.been.calledWith error
+
+    it "calling .then(callback) does nothing", ->
+      callback = sinon.spy()
+      testedPromise.then callback
+      callback.should.have.callCount 0
+
+    describe "and after calling .reject(error).reject()", ->
+      beforeEach ->
+        nextPromise.reject()
+        undefined
+
+      it "calling .catch(rethrow).catch(callback) calls the callback immediately", ->
+        callback = sinon.spy()
+        testedPromise
+          .catch (me) -> throw me
+          .catch callback
+        callback.should.have.callCount 1
+          .and.have.been.calledWith error
 
   describe "when after .then(onfulfilled) specified", ->
     thenCallback = null

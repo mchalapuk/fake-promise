@@ -1,5 +1,7 @@
+require "source-map-support"
+  .install()
 
-should = require "should"
+require "should"
 require "should-sinon"
 
 errors = []
@@ -11,12 +13,12 @@ maybeThrow = ->
   return if errors.length is 0
 
   message = errors
-    .map e => e.stack
-    .join "\n\n"
+    .map def => "#{def.type}#{def.error.stack}\n"
+    .join ""
 
   errors.splice 0, errors.length
   throw new Error message
 
-beforeEach -> maybeThrow
-afterEach -> maybeThrow
+beforeEach maybeThrow
+afterEach maybeThrow
 
