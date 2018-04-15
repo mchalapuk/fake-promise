@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/muroc/fake-promise.git"
+    "url": "git+https://github.com/mchalapuk/fake-promise.git"
   },
   "keywords": [
     "promise",
@@ -27,9 +27,9 @@
   "author": "Maciej Chałapuk (maciej@chalapuk.pl)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/muroc/fake-promise/issues"
+    "url": "https://github.com/mchalapuk/fake-promise/issues"
   },
-  "homepage": "https://github.com/muroc/fake-promise#readme",
+  "homepage": "https://github.com/mchalapuk/fake-promise#readme",
   "devDependencies": {
     "coffeescript": "^1.12.7",
     "mocha": "^3.5.3",
