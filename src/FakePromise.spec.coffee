@@ -42,6 +42,24 @@ describe "FakePromise", ->
         callback.should.have.callCount 1
           .and.have.been.calledWith null
 
+  describe "when after .resolve() without result", ->
+    nextPromise = null
+
+    beforeEach ->
+      nextPromise = testedPromise.resolve()
+      undefined
+
+    it "calling .then(callback) calls the callback immediately", ->
+      callback = sinon.spy()
+      testedPromise.then callback
+      callback.should.have.callCount 1
+        .and.have.been.calledWith()
+
+    it "calling .catch(callback) does nothing", ->
+      callback = sinon.spy()
+      testedPromise.catch callback
+      callback.should.have.callCount 0
+
   describe "when after calling .reject(error)", ->
     error = new Error "test"
     nextPromise = null

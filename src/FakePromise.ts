@@ -14,6 +14,7 @@ export class FakePromise<T> implements Promise<T> {
   private resultSet = false;
   private specified = false;
   private resolved = false;
+  private rejected = false;
 
   then<TResult1 = T, TResult2 = never>(
     onfulfilled ?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
@@ -70,7 +71,7 @@ export class FakePromise<T> implements Promise<T> {
     if (error !== undefined) {
       this.setError(error);
     }
-    this.markResolved();
+    this.markRejected();
 
     if (this.specified) {
       this.doReject();
@@ -80,7 +81,14 @@ export class FakePromise<T> implements Promise<T> {
 
   private markResolved() {
     check(!this.resolved, 'promise already resolved');
+    check(!this.rejected, 'promise already rejected');
     this.resolved = true;
+  }
+
+  private markRejected() {
+    check(!this.resolved, 'promise already resolved');
+    check(!this.rejected, 'promise already rejected');
+    this.rejected = true;
   }
 
   private doResolve() {
@@ -112,14 +120,14 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   private maybeFinishResolving() {
-    if (!this.resolved) {
-      return
-    }
-    if (this.resultSet) {
+    if (this.resolved) {
       this.doResolve();
       return;
     }
-    this.doReject();
+    if (this.rejected) {
+      this.doReject();
+      return;
+    }
   }
 
   private getNextPromise() {
