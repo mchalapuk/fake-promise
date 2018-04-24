@@ -42,16 +42,43 @@ export class FakePromise<T> implements Promise<T> {
     return this.getNextPromise();
   }
 
-  setResult(result : T) {
+  setResult(resultOrPromise : T | Promise<T>) {
     check(!this.resultSet, 'result already set');
-    this.result = result;
     this.resultSet = true;
+
+    if (isPromise(resultOrPromise)) {
+      resultOrPromise.then(
+        result => this.result = result,
+        error => this.error = error,
+      );
+    } else {
+      this.result = resultOrPromise;
+    }
     return this;
   }
 
-  resolve(result ?: T) {
-    if (result !== undefined) {
-      this.setResult(result);
+  setError(error : any) {
+    check(!this.resultSet, 'result already set');
+    this.resultSet = true;
+
+    this.error = error;
+    return this;
+  }
+
+  resolve(resultOrPromise ?: T | Promise<T>) {
+    if (resultOrPromise !== undefined) {
+      if (isPromise(resultOrPromise)) {
+        // In case the result is a promise, we don't know
+        // if this is a resolve or reject at this point.
+        resultOrPromise.then(
+          result => this.resolve(result),
+          error => this.reject(error),
+        );
+        return this.getNextPromise()
+      }
+
+      // Result is not a promise. We may safely resolve.
+      this.setResult(resultOrPromise);
     }
     this.markResolved();
 
@@ -59,12 +86,6 @@ export class FakePromise<T> implements Promise<T> {
       this.doResolve();
     }
     return this.getNextPromise();
-  }
-
-  setError(error : any) {
-    check(this.error === undefined, 'error already set');
-    this.error = error;
-    return this;
   }
 
   reject(error ?: any) {
@@ -92,28 +113,30 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   private doResolve() {
-    const next = this.getNextPromise() as FakePromise<any>;
     if (!hasValue(this.onfulfilled)) {
-      return next.setResult(this.result);
+      // just forward
+      return this.getNextPromise().setResult(this.result);
     }
 
     const callback = this.onfulfilled as (arg : T) => any;
-    try {
-      return next.setResult(callback(this.result as T));
-    } catch (e) {
-      return next.setError(e);
-    }
+    return this.executeAndSetNextResult(callback, this.result);
   }
 
   private doReject() {
-    const next = this.getNextPromise() as FakePromise<any>;
     if (!hasValue(this.onrejected)) {
-      return next.setError(this.error);
+      // just forward
+      return this.getNextPromise().setError(this.error);
     }
 
     const callback = this.onrejected as (arg : any) => any;
+    return this.executeAndSetNextResult(callback, this.error);
+  }
+
+  private executeAndSetNextResult(callback : (arg : any) => any, arg : any) {
+    const next = this.getNextPromise();
+
     try {
-      return next.setResult(callback(this.error as any));
+      return next.setResult(callback(arg as any));
     } catch (e) {
       return next.setError(e);
     }
@@ -138,6 +161,8 @@ export class FakePromise<T> implements Promise<T> {
   }
 }
 
+export default FakePromise;
+
 function check(condition : boolean, message : string) {
   if (!condition) {
     throw new Error(message);
@@ -148,5 +173,7 @@ function hasValue(arg : any | null | undefined) {
   return (arg !== null && arg !== undefined);
 }
 
-export default FakePromise;
+function isPromise<T>(arg : T | Promise<T>): arg is Promise<T> {
+  return hasValue(arg) && typeof (arg as any).then === 'function';
+}
 

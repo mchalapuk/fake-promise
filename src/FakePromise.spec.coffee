@@ -60,6 +60,48 @@ describe "FakePromise", ->
       testedPromise.catch callback
       callback.should.have.callCount 0
 
+  describe "when after .resolve() with resolved promise as result", ->
+    nextPromise = null
+    result = "result"
+
+    beforeEach ->
+      resultPromise = new FakePromise
+      resultPromise.resolve result
+      nextPromise = testedPromise.resolve resultPromise
+      undefined
+
+    it "calling .then(callback) calls the callback immediately", ->
+      callback = sinon.spy()
+      testedPromise.then callback
+      callback.should.have.callCount 1
+        .and.have.been.calledWith result
+
+    it "calling .catch(callback) does nothing", ->
+      callback = sinon.spy()
+      testedPromise.catch callback
+      callback.should.have.callCount 0
+
+  describe "when after .resolve() with rejected promise as result", ->
+    nextPromise = null
+    error = new Error "rejected"
+
+    beforeEach ->
+      resultPromise = new FakePromise
+      resultPromise.reject error
+      nextPromise = testedPromise.resolve resultPromise
+      undefined
+
+    it "calling .catch(callback) calls the callback immediately", ->
+      callback = sinon.spy()
+      testedPromise.catch callback
+      callback.should.have.callCount 1
+        .and.have.been.calledWith error
+
+    it "calling .then(callback) does nothing", ->
+      callback = sinon.spy()
+      testedPromise.then callback
+      callback.should.have.callCount 0
+
   describe "when after calling .reject(error)", ->
     error = new Error "test"
     nextPromise = null
@@ -202,6 +244,58 @@ describe "FakePromise", ->
       it "passes result to callback", ->
         thenCallback.should.have.been.calledWith arg
 
+  describe "when after .then(returnResolvedPromise).then(onfulfilled) specified", ->
+    thenCallback = null
+
+    beforeEach ->
+      thenCallback = sinon.spy()
+      resultPromise = new FakePromise
+      testedPromise
+        .then (arg) ->
+          resultPromise.resolve arg
+          resultPromise
+        .then thenCallback
+      undefined
+
+    describe "and after calling .resolve(arg).resolve()", ->
+      arg = "I will behave"
+
+      beforeEach ->
+        testedPromise.resolve arg
+          .resolve()
+        undefined
+
+      it "calls proper callback", ->
+        thenCallback.should.have.callCount 1
+      it "passes result to callback", ->
+        thenCallback.should.have.been.calledWith arg
+
+  describe "when after .then(returnRejectedPromise).catch(onfulfilled) specified", ->
+    catchCallback = null
+
+    beforeEach ->
+      catchCallback = sinon.spy()
+      resultPromise = new FakePromise
+      testedPromise
+        .then (arg) ->
+          resultPromise.reject arg
+          resultPromise
+        .catch catchCallback
+      undefined
+
+    describe "and after calling .resolve(arg).resolve()", ->
+      arg = "I will behave"
+
+      beforeEach ->
+        testedPromise.resolve arg
+          .reject()
+        undefined
+
+      it "calls proper callback", ->
+        catchCallback.should.have.callCount 1
+      it "passes result to callback", ->
+        catchCallback.should.have.been.calledWith arg
+
   describe "when after .catch(rethrow).catch(onrejected) specified", ->
     catchCallback = null
 
@@ -213,7 +307,7 @@ describe "FakePromise", ->
       undefined
 
     describe "and after calling .reject(arg).reject()", ->
-      err = "I will not promise anything connected with promises"
+      err = new Error "This promise is a fake one"
 
       beforeEach ->
         testedPromise.reject err
@@ -224,4 +318,56 @@ describe "FakePromise", ->
         catchCallback.should.have.callCount 1
       it "passes error to callback", ->
         catchCallback.should.have.been.calledWith err
+
+  describe "when after .catch(returnRejectedPromise).catch(onrejected) specified", ->
+    catchCallback = null
+
+    beforeEach ->
+      catchCallback = sinon.spy()
+      resultPromise = new FakePromise
+      testedPromise
+        .catch (err) ->
+          resultPromise.reject err
+          resultPromise
+        .catch catchCallback
+      undefined
+
+    describe "and after calling .reject(arg).reject()", ->
+      err = new Error "This promise is a fake one"
+
+      beforeEach ->
+        testedPromise.reject err
+          .reject()
+        undefined
+
+      it "calls proper callback", ->
+        catchCallback.should.have.callCount 1
+      it "passes error to callback", ->
+        catchCallback.should.have.been.calledWith err
+
+  describe "when after .catch(returnResolvedPromise).then(onrejected) specified", ->
+    thenCallback = null
+
+    beforeEach ->
+      thenCallback = sinon.spy()
+      resultPromise = new FakePromise
+      testedPromise
+        .catch (err) ->
+          resultPromise.resolve err.message
+          resultPromise
+        .then thenCallback
+      undefined
+
+    describe "and after calling .reject(arg).resolve()", ->
+      err = "This promise is a fake one"
+
+      beforeEach ->
+        testedPromise.reject new Error err
+          .resolve()
+        undefined
+
+      it "calls proper callback", ->
+        thenCallback.should.have.callCount 1
+      it "passes error to callback", ->
+        thenCallback.should.have.been.calledWith err
 
