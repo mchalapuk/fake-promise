@@ -49,16 +49,22 @@ describe "FakePromise", ->
       nextPromise = testedPromise.resolve()
       undefined
 
-    it "calling .then(callback) calls the callback immediately", ->
-      callback = sinon.spy()
-      testedPromise.then callback
-      callback.should.have.callCount 1
-        .and.have.been.calledWith()
+    describe "and after calling .setResult(result)", ->
+      result = "result"
 
-    it "calling .catch(callback) does nothing", ->
-      callback = sinon.spy()
-      testedPromise.catch callback
-      callback.should.have.callCount 0
+      beforeEach ->
+        testedPromise.setResult result
+
+      it "calling .then(callback) calls the callback immediately", ->
+        callback = sinon.spy()
+        testedPromise.then callback
+        callback.should.have.callCount 1
+          .and.have.been.calledWith result
+
+      it "calling .catch(callback) does nothing", ->
+        callback = sinon.spy()
+        testedPromise.catch callback
+        callback.should.have.callCount 0
 
   describe "when after .resolve() with resolved promise as result", ->
     nextPromise = null
@@ -151,7 +157,8 @@ describe "FakePromise", ->
         .throw new Error "promise already specified"
 
     it ".setResult(undefined).resolve() doesn't throw", ->
-      (testedPromise.setResult undefined).resolve()
+      testedPromise.setResult undefined
+      testedPromise.resolve()
       undefined
 
     describe "and after calling .resolve(arg)", ->
@@ -288,6 +295,7 @@ describe "FakePromise", ->
 
       beforeEach ->
         testedPromise.resolve arg
+          .resolve()
           .reject()
         undefined
 
@@ -370,4 +378,53 @@ describe "FakePromise", ->
         thenCallback.should.have.callCount 1
       it "passes error to callback", ->
         thenCallback.should.have.been.calledWith err
+
+  describe "when after .setResult(...) called", ->
+    expectedResult = {}
+
+    beforeEach ->
+      testedPromise.setResult expectedResult
+
+    it "calling .setResult(...) again throws an error", ->
+      should -> testedPromise.setResult expectedResult
+        .throw "result already set"
+    it "calling .resolve(result) throws an error", ->
+      should -> testedPromise.resolve expectedResult
+        .throw "result already set"
+    it "calling .setError(...) throws an error", ->
+      should -> testedPromise.setError new Error 'test'
+        .throw "trying to set error on a promise with result already set"
+    it "calling .reject() throws an error", ->
+      should -> testedPromise.reject()
+        .throw "trying to reject a promise containing result"
+
+    it "calling .resolve() does not throw", ->
+      testedPromise.resolve().resolve()
+      testedPromise.then (result) -> result.should.eql expectedResult
+
+  describe "when after .setError(...) called", ->
+    expectedError = new Error "test"
+
+    beforeEach ->
+      testedPromise.setError expectedError
+
+    it "calling .setError(...) again throws an error", ->
+      should -> testedPromise.setError expectedError
+        .throw "error already set"
+    it "calling .reject(error) throws an error", ->
+      should -> testedPromise.reject expectedError
+        .throw "error already set"
+    it "calling .setError(...) throws an error", ->
+      should -> testedPromise.setResult {}
+        .throw "trying to set result on a promise with error already set"
+    it "calling .resolve() throws an error", ->
+      should () -> testedPromise.resolve()
+        .throw "trying to resolve a promise containing error"
+
+    it "calling .reject() does not throw", ->
+      testedPromise.reject().resolve()
+      testedPromise.then(
+        -> throw new Error "expected rejection"
+        (error) -> error.should.eql expectedError
+      )
 

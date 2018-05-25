@@ -8,10 +8,11 @@ export class FakePromise<T> implements Promise<T> {
 
   private nextPromise ?: FakePromise<any>;
 
-  private result : T;
+  private result : T | Promise<T>;
   private error : any;
 
   private resultSet = false;
+  private errorSet = false;
   private specified = false;
   private resolved = false;
   private rejected = false;
@@ -42,62 +43,53 @@ export class FakePromise<T> implements Promise<T> {
     return this.getNextPromise();
   }
 
-  setResult(resultOrPromise : T | Promise<T>) {
+  setResult(result : T | Promise<T>) {
+    check(!this.errorSet, 'trying to set result on a promise with error already set');
     check(!this.resultSet, 'result already set');
-    this.resultSet = true;
 
-    if (isPromise(resultOrPromise)) {
-      resultOrPromise.then(
-        result => this.result = result,
-        error => this.error = error,
-      );
-    } else {
-      this.result = resultOrPromise;
-    }
-    return this;
+    this.resultSet = true;
+    this.result = result;
+
+    this.maybeFinishResolving();
   }
 
   setError(error : any) {
-    check(!this.resultSet, 'result already set');
-    this.resultSet = true;
+    check(!this.resultSet, 'trying to set error on a promise with result already set');
+    check(!this.errorSet, 'error already set');
+    check(error !== undefined && error !== null, 'error must not be undefined or null');
 
+    this.errorSet = true;
     this.error = error;
-    return this;
+
+    this.maybeFinishResolving();
   }
 
-  resolve(resultOrPromise ?: T | Promise<T>) {
-    if (resultOrPromise !== undefined) {
-      if (isPromise(resultOrPromise)) {
-        // In case the result is a promise, we don't know
-        // if this is a resolve or reject at this point.
-        resultOrPromise.then(
-          result => this.resolve(result),
-          error => this.reject(error),
-        );
-        return this.getNextPromise()
-      }
-
-      // Result is not a promise. We may safely resolve.
-      this.setResult(resultOrPromise);
-    }
+  resolve(result ?: T | Promise<T>) {
+    check(!this.errorSet, 'trying to resolve a promise containing error');
     this.markResolved();
 
-    if (this.specified) {
-      this.doResolve();
+    const next = this.getNextPromise();
+
+    if (result !== undefined) {
+      this.setResult(result);
+      return next;
     }
-    return this.getNextPromise();
+    this.maybeFinishResolving();
+    return next;
   }
 
   reject(error ?: any) {
-    if (error !== undefined) {
-      this.setError(error);
-    }
+    check(!this.resultSet, 'trying to reject a promise containing result');
     this.markRejected();
 
-    if (this.specified) {
-      this.doReject();
+    const next = this.getNextPromise();
+
+    if (error !== undefined) {
+      this.setError(error);
+      return next;
     }
-    return this.getNextPromise();
+    this.maybeFinishResolving();
+    return next;
   }
 
   private markResolved() {
@@ -113,19 +105,46 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   private doResolve() {
+    check(this.resultSet, 'trying to resolve a promise without result');
+
+    const next = this.getNextPromise();
     if (!hasValue(this.onfulfilled)) {
       // just forward
-      return this.getNextPromise().setResult(this.result);
+      next.setResult(this.result);
+      return next;
     }
 
-    const callback = this.onfulfilled as (arg : T) => any;
-    return this.executeAndSetNextResult(callback, this.result);
+    if (!isPromise(this.result)) {
+      const callback = this.onfulfilled as (arg : T) => any;
+      return this.executeAndSetNextResult(callback, this.result);
+    }
+
+    this.result.then(
+      result => {
+        const callback = this.onfulfilled as (arg : T) => any;
+        return this.executeAndSetNextResult(callback, result);
+      },
+      error => {
+        if (!hasValue(this.onrejected)) {
+          // just forward
+          next.setResult(error);
+          return next;
+        }
+        const callback = this.onrejected as (arg : any) => any;
+        return this.executeAndSetNextResult(callback, error);
+      }
+    );
+    return next;
   }
 
   private doReject() {
+    check(this.errorSet, 'trying to reject a promise without error');
+
     if (!hasValue(this.onrejected)) {
       // just forward
-      return this.getNextPromise().setError(this.error);
+      const next = this.getNextPromise();
+      next.setError(this.error);
+      return next;
     }
 
     const callback = this.onrejected as (arg : any) => any;
@@ -136,21 +155,22 @@ export class FakePromise<T> implements Promise<T> {
     const next = this.getNextPromise();
 
     try {
-      return next.setResult(callback(arg as any));
+      next.setResult(callback(arg as any));
     } catch (e) {
-      return next.setError(e);
+      next.setError(e);
     }
+    return next;
   }
 
   private maybeFinishResolving() {
-    if (this.resolved) {
+    if (!this.specified || !(this.resolved || this.rejected)) {
+      return;
+    }
+    if (this.resultSet) {
       this.doResolve();
       return;
     }
-    if (this.rejected) {
-      this.doReject();
-      return;
-    }
+    this.doReject();
   }
 
   private getNextPromise() {
