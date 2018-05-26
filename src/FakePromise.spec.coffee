@@ -9,6 +9,7 @@ describe "FakePromise", ->
 
   beforeEach ->
     testedPromise = new FakePromise
+    testedPromise = new Proxy testedPromise, new LoggingProxyHandler
     undefined
 
   describe "when after calling .resolve(null)", ->
@@ -427,4 +428,24 @@ describe "FakePromise", ->
         -> throw new Error "expected rejection"
         (error) -> error.should.eql expectedError
       )
+
+class FunctionProxyHandler
+  constructor: (@name) ->
+  apply: (target, thisArg, argumentList) ->
+    console.log "call #{@name}(#{argumentList.join(", ")})"
+    target.apply thisArg, argumentList
+
+class LoggingProxyHandler
+  get: (target, property, receiver) ->
+    value = target[property]
+    console.log "get #{property} === #{value}"
+    if typeof value is "function"
+      new Proxy value, new FunctionProxyHandler property
+    else
+      value
+  set: (target, property, value, receiver) ->
+    previous = target[property]
+    console.log "set #{property} = #{value}; previous === #{previous}"
+    target[property] = value
+    true
 

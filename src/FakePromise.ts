@@ -27,8 +27,7 @@ export class FakePromise<T> implements Promise<T> {
     this.onrejected = onrejected;
     this.specified = true;
 
-    this.maybeFinishResolving();
-    return this.getNextPromise();
+    return this.maybeFinishResolving();
   }
 
   catch<TResult = never>(
@@ -39,8 +38,7 @@ export class FakePromise<T> implements Promise<T> {
     this.onrejected = onrejected;
     this.specified = true;
 
-    this.maybeFinishResolving();
-    return this.getNextPromise();
+    return this.maybeFinishResolving();
   }
 
   setResult(result : T | Promise<T>) {
@@ -74,8 +72,7 @@ export class FakePromise<T> implements Promise<T> {
       this.setResult(result);
       return next;
     }
-    this.maybeFinishResolving();
-    return next;
+    return this.maybeFinishResolving();
   }
 
   reject(error ?: any) {
@@ -88,8 +85,7 @@ export class FakePromise<T> implements Promise<T> {
       this.setError(error);
       return next;
     }
-    this.maybeFinishResolving();
-    return next;
+    return this.maybeFinishResolving();
   }
 
   private markResolved() {
@@ -164,13 +160,12 @@ export class FakePromise<T> implements Promise<T> {
 
   private maybeFinishResolving() {
     if (!this.specified || !(this.resolved || this.rejected)) {
-      return;
+      return this.getNextPromise();
     }
     if (this.resultSet) {
-      this.doResolve();
-      return;
+      return this.doResolve();
     }
-    this.doReject();
+    return this.doReject();
   }
 
   private getNextPromise() {
