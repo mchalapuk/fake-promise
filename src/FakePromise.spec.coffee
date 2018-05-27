@@ -4,6 +4,13 @@ sinon = require "sinon"
 FakePromise = require "./FakePromise"
   .default
 
+if process.env.hasOwnProperty "DEBUG"
+  # enable crazy debug logs
+  OriginalFakePromise = FakePromise
+  FakePromise = ->
+    instance = new OriginalFakePromise
+    new Proxy instance, new LoggingProxyHandler instance
+
 describe "FakePromise", ->
   testedPromise = null
 
@@ -496,4 +503,56 @@ describe "FakePromise", ->
     it "calling .resolve() does not throw", ->
       testedPromise.resolve().resolve()
       testedPromise.then (result) -> (should result).equal expectedResult
+
+indent = 0
+
+class FunctionProxyHandler
+  constructor: (@name, @parent) ->
+  apply: (target, thisArg, argumentList) ->
+    @parent.log "call".yellow, "#{@name}(#{(argumentList.map stringifyArg).join ", " })"
+    indent += 1
+    try
+      result = target.apply thisArg, argumentList
+    catch e
+      @parent.log "throw".red, stringifyArg e
+      indent -= 1
+      throw e
+    @parent.log "return".green, stringifyArg result
+    indent -= 1
+    result
+
+class LoggingProxyHandler
+  constructor: (@target) ->
+    @indent = 0
+  get: (target, property, receiver) ->
+    value = target[property]
+    if property in ["id", "nextPromise"]
+      return value
+    @log "get".blue, "#{property} -> #{stringifyArg value}"
+    if typeof value is "function"
+      new Proxy value, new FunctionProxyHandler property, @
+    else
+      value
+  set: (target, property, value, receiver) ->
+    previous = target[property]
+    @log "set".magenta, "#{property} = #{stringifyArg value}"
+    if property is "nextPromise"
+      value = new Proxy value, new LoggingProxyHandler value
+    target[property] = value
+    true
+  log: (operation, args) ->
+    console.log "#{printIndent()}#{"##{@target.id}".gray} #{operation} #{if args then args.gray else ""}"
+
+printIndent = ->
+  "                                                             ".substring 0, indent * 2
+
+stringifyArg = (arg) ->
+  if arg instanceof OriginalFakePromise
+    "FakePromise##{arg.id}"
+  else if arg instanceof Error
+    "#{arg.name}(#{JSON.stringify arg.message})"
+  else if typeof arg is "function"
+    "function #{arg.name or "unnamed"}"
+  else
+    JSON.stringify arg
 

@@ -1,4 +1,6 @@
 
+let nextId = 0;
+
 /**
  * @author Maciej Chałapuk (maciej@chalapuk.pl)
  */
@@ -10,6 +12,8 @@ export class FakePromise<T> implements Promise<T> {
 
   private result : T | Promise<T>;
   private error : any;
+
+  private id = nextId++;
 
   private resultPromised = false;
   private resultSet = false;
@@ -98,6 +102,17 @@ export class FakePromise<T> implements Promise<T> {
     }
     this.markRejected();
     return this.maybeFinishResolving();
+  }
+
+  toString() {
+    const { resultPromised, resultSet, errorSet, specified, resolved, rejected } = this;
+    const flags = { resultPromised, resultSet, errorSet, specified, resolved, rejected } as any;
+
+    const flagsString = Object.keys(flags)
+      .map(key => `${key}=${flags[key]}`)
+      .join(',')
+    ;
+    return `FakePromise#${this.id}{${flagsString}}`;
   }
 
   private markResolved() {
