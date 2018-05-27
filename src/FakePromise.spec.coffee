@@ -9,8 +9,14 @@ describe "FakePromise", ->
 
   beforeEach ->
     testedPromise = new FakePromise
-    testedPromise = new Proxy testedPromise, new LoggingProxyHandler
     undefined
+
+  it "calling .setError(undefined) throws", ->
+    should -> testedPromise.setError undefined
+      .throw "error must not be undefined nor null"
+  it "calling .setError(null) throws", ->
+    should -> testedPromise.setError null
+      .throw "error must not be undefined nor null"
 
   describe "when after calling .resolve(null)", ->
     nextPromise = null
@@ -283,9 +289,9 @@ describe "FakePromise", ->
 
     beforeEach ->
       catchCallback = sinon.spy()
-      resultPromise = new FakePromise
       testedPromise
         .then (arg) ->
+          resultPromise = new FakePromise
           resultPromise.reject arg
           resultPromise
         .catch catchCallback
@@ -296,7 +302,6 @@ describe "FakePromise", ->
 
       beforeEach ->
         testedPromise.resolve arg
-          .resolve()
           .reject()
         undefined
 
@@ -333,9 +338,9 @@ describe "FakePromise", ->
 
     beforeEach ->
       catchCallback = sinon.spy()
-      resultPromise = new FakePromise
       testedPromise
         .catch (err) ->
+          resultPromise = new FakePromise
           resultPromise.reject err
           resultPromise
         .catch catchCallback
@@ -380,7 +385,7 @@ describe "FakePromise", ->
       it "passes error to callback", ->
         thenCallback.should.have.been.calledWith err
 
-  describe "when after .setResult(...) called", ->
+  describe "when after .setResult(result) called", ->
     expectedResult = {}
 
     beforeEach ->
@@ -403,7 +408,32 @@ describe "FakePromise", ->
       testedPromise.resolve().resolve()
       testedPromise.then (result) -> result.should.eql expectedResult
 
-  describe "when after .setError(...) called", ->
+  describe "when after .setResult(resolvedPromise) called", ->
+    expectedResult = {}
+
+    beforeEach ->
+      resultPromise = new FakePromise
+      resultPromise.resolve expectedResult
+      testedPromise.setResult resultPromise
+
+    it "calling .setResult(...) again throws an error", ->
+      should -> testedPromise.setResult expectedResult
+        .throw "result already set"
+    it "calling .resolve(result) throws an error", ->
+      should -> testedPromise.resolve expectedResult
+        .throw "result already set"
+    it "calling .setError(...) throws an error", ->
+      should -> testedPromise.setError new Error 'test'
+        .throw "trying to set error on a promise with result already set"
+    it "calling .reject() throws an error", ->
+      should -> testedPromise.reject()
+        .throw "trying to reject a promise containing result"
+
+    it "calling .resolve() does not throw", ->
+      testedPromise.resolve().resolve()
+      testedPromise.then (result) -> result.should.eql expectedResult
+
+  describe "when after .setError(error) called", ->
     expectedError = new Error "test"
 
     beforeEach ->
@@ -429,23 +459,41 @@ describe "FakePromise", ->
         (error) -> error.should.eql expectedError
       )
 
-class FunctionProxyHandler
-  constructor: (@name) ->
-  apply: (target, thisArg, argumentList) ->
-    console.log "call #{@name}(#{argumentList.join(", ")})"
-    target.apply thisArg, argumentList
+  describe "when after .setResult(rejectedPromise) called", ->
+    expectedError = new Error "test"
 
-class LoggingProxyHandler
-  get: (target, property, receiver) ->
-    value = target[property]
-    console.log "get #{property} === #{value}"
-    if typeof value is "function"
-      new Proxy value, new FunctionProxyHandler property
-    else
-      value
-  set: (target, property, value, receiver) ->
-    previous = target[property]
-    console.log "set #{property} = #{value}; previous === #{previous}"
-    target[property] = value
-    true
+    beforeEach ->
+      resultPromise = new FakePromise
+      resultPromise.reject expectedError
+      testedPromise.setResult resultPromise
+
+    it "calling .setError(...) again throws an error", ->
+      should -> testedPromise.setError expectedError
+        .throw "error already set"
+    it "calling .reject(error) throws an error", ->
+      should -> testedPromise.reject expectedError
+        .throw "error already set"
+    it "calling .setError(...) throws an error", ->
+      should -> testedPromise.setResult {}
+        .throw "trying to set result on a promise with error already set"
+    it "calling .resolve() throws an error", ->
+      should () -> testedPromise.resolve()
+        .throw "trying to resolve a promise containing error"
+
+    it "calling .reject() does not throw", ->
+      testedPromise.reject().resolve()
+      testedPromise.then(
+        -> throw new Error "expected rejection"
+        (error) -> error.should.eql expectedError
+      )
+
+  describe "when after calling .setResult(undefined)", ->
+    expectedResult = undefined
+
+    beforeEach ->
+      testedPromise.setResult expectedResult
+
+    it "calling .resolve() does not throw", ->
+      testedPromise.resolve().resolve()
+      testedPromise.then (result) -> (should result).equal expectedResult
 
