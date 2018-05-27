@@ -18,12 +18,55 @@ describe "FakePromise", ->
     testedPromise = new FakePromise
     undefined
 
-  it "calling .setError(undefined) throws", ->
-    should -> testedPromise.setError undefined
-      .throw "error must not be undefined nor null"
-  it "calling .setError(null) throws", ->
-    should -> testedPromise.setError null
-      .throw "error must not be undefined nor null"
+  [ null, undefined ].forEach (arg) ->
+    it "calling .setError(#{arg}) throws", ->
+      should -> testedPromise.setError arg
+        .throw "error must not be undefined nor null"
+  [ 'reject', 'rejectOne' ].forEach (methodName) ->
+    it "calling .#{methodName}(null) throws", ->
+      should -> testedPromise[methodName] null
+        .throw "error must not be undefined nor null"
+
+  describe "when after calling .resolve(result)", ->
+    expectedResult = {}
+
+    beforeEach ->
+      testedPromise.resolve expectedResult
+
+    it "resolves full promise chain", ->
+      error = new Error "test"
+
+      testedPromise
+        .then (result) ->
+          result.should.equal expectedResult
+          throw error
+        .catch (err) ->
+          err.should.equal error
+          expectedResult
+        .then (result) ->
+          (should result).equal expectedResult
+          throw error
+        .then(
+          (result) -> throw new Error "expected rejection"
+          (err) -> err.should.equal error
+        )
+
+  describe "when after calling .reject(error)", ->
+    expectedError = new Error "test"
+
+    beforeEach ->
+      testedPromise.reject expectedError
+
+    it "resolves full promise chain", ->
+      testedPromise
+        .catch (err) ->
+          err.should.equal expectedError
+        .then ->
+          throw expectedError
+        .then(
+          (result) -> throw new Error "expected rejection"
+          (err) -> err.should.equal expectedError
+        )
 
   describe "when after calling .resolveOne(null)", ->
     nextPromise = null
@@ -401,16 +444,25 @@ describe "FakePromise", ->
     it "calling .setResult(...) again throws an error", ->
       should -> testedPromise.setResult expectedResult
         .throw "result already set"
+    it "calling .resolve(result) throws an error", ->
+      should -> testedPromise.resolve expectedResult
+        .throw "result already set"
     it "calling .resolveOne(result) throws an error", ->
       should -> testedPromise.resolveOne expectedResult
         .throw "result already set"
     it "calling .setError(...) throws an error", ->
       should -> testedPromise.setError new Error 'test'
         .throw "trying to set error on a promise with result already set"
+    it "calling .reject() throws an error", ->
+      should -> testedPromise.reject()
+        .throw "trying to reject a promise containing result"
     it "calling .rejectOne() throws an error", ->
       should -> testedPromise.rejectOne()
         .throw "trying to reject a promise containing result"
 
+    it "calling .resolve() does not throw", ->
+      testedPromise.resolve()
+      testedPromise.then (result) -> result.should.eql expectedResult
     it "calling .resolveOne() does not throw", ->
       testedPromise.resolveOne().resolveOne()
       testedPromise.then (result) -> result.should.eql expectedResult
@@ -420,11 +472,14 @@ describe "FakePromise", ->
 
     beforeEach ->
       resultPromise = new FakePromise
-      resultPromise.resolveOne expectedResult
+      resultPromise.resolve expectedResult
       testedPromise.setResult resultPromise
 
     it "calling .setResult(...) again throws an error", ->
       should -> testedPromise.setResult expectedResult
+        .throw "result already set"
+    it "calling .resolve(result) throws an error", ->
+      should -> testedPromise.resolve expectedResult
         .throw "result already set"
     it "calling .resolveOne(result) throws an error", ->
       should -> testedPromise.resolveOne expectedResult
@@ -432,10 +487,16 @@ describe "FakePromise", ->
     it "calling .setError(...) throws an error", ->
       should -> testedPromise.setError new Error 'test'
         .throw "trying to set error on a promise with result already set"
+    it "calling .reject() throws an error", ->
+      should -> testedPromise.reject()
+        .throw "trying to reject a promise containing result"
     it "calling .rejectOne() throws an error", ->
       should -> testedPromise.rejectOne()
         .throw "trying to reject a promise containing result"
 
+    it "calling .resolve() does not throw", ->
+      testedPromise.resolve()
+      testedPromise.then (result) -> result.should.eql expectedResult
     it "calling .resolveOne() does not throw", ->
       testedPromise.resolveOne().resolveOne()
       testedPromise.then (result) -> result.should.eql expectedResult
@@ -449,12 +510,18 @@ describe "FakePromise", ->
     it "calling .setError(...) again throws an error", ->
       should -> testedPromise.setError expectedError
         .throw "error already set"
+    it "calling .reject(error) throws an error", ->
+      should -> testedPromise.reject expectedError
+        .throw "error already set"
     it "calling .rejectOne(error) throws an error", ->
       should -> testedPromise.rejectOne expectedError
         .throw "error already set"
     it "calling .setError(...) throws an error", ->
       should -> testedPromise.setResult {}
         .throw "trying to set result on a promise with error already set"
+    it "calling .resolve() throws an error", ->
+      should () -> testedPromise.resolve()
+        .throw "trying to resolve a promise containing error"
     it "calling .resolveOne() throws an error", ->
       should () -> testedPromise.resolveOne()
         .throw "trying to resolve a promise containing error"
@@ -465,17 +532,26 @@ describe "FakePromise", ->
         -> throw new Error "expected rejection"
         (error) -> error.should.eql expectedError
       )
+    it "calling .reject() does not throw", ->
+      testedPromise.reject()
+      testedPromise.then(
+        -> throw new Error "expected rejection"
+        (error) -> error.should.eql expectedError
+      )
 
   describe "when after .setResult(rejectedPromise) called", ->
     expectedError = new Error "test"
 
     beforeEach ->
       resultPromise = new FakePromise
-      resultPromise.rejectOne expectedError
+      resultPromise.reject expectedError
       testedPromise.setResult resultPromise
 
     it "calling .setError(...) again throws an error", ->
       should -> testedPromise.setError expectedError
+        .throw "error already set"
+    it "calling .reject(error) throws an error", ->
+      should -> testedPromise.reject expectedError
         .throw "error already set"
     it "calling .rejectOne(error) throws an error", ->
       should -> testedPromise.rejectOne expectedError
@@ -483,10 +559,19 @@ describe "FakePromise", ->
     it "calling .setError(...) throws an error", ->
       should -> testedPromise.setResult {}
         .throw "trying to set result on a promise with error already set"
+    it "calling .resolve() throws an error", ->
+      should () -> testedPromise.resolve()
+        .throw "trying to resolve a promise containing error"
     it "calling .resolveOne() throws an error", ->
       should () -> testedPromise.resolveOne()
         .throw "trying to resolve a promise containing error"
 
+    it "calling .reject() does not throw", ->
+      testedPromise.reject()
+      testedPromise.then(
+        -> throw new Error "expected rejection"
+        (error) -> error.should.eql expectedError
+      )
     it "calling .rejectOne() does not throw", ->
       testedPromise.rejectOne().resolveOne()
       testedPromise.then(
@@ -502,6 +587,9 @@ describe "FakePromise", ->
 
     it "calling .resolveOne() does not throw", ->
       testedPromise.resolveOne().resolveOne()
+      testedPromise.then (result) -> (should result).equal expectedResult
+    it "calling .resolve() does not throw", ->
+      testedPromise.resolve()
       testedPromise.then (result) -> (should result).equal expectedResult
 
 indent = 0

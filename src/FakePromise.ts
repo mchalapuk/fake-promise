@@ -16,6 +16,7 @@ export class FakePromise<T> implements Promise<T> {
   private id = nextId++;
 
   private resultPromised = false;
+  private resolveChain = false;
   private resultSet = false;
   private errorSet = false;
   private specified = false;
@@ -46,7 +47,17 @@ export class FakePromise<T> implements Promise<T> {
     return this.maybeFinishResolving();
   }
 
-  setResult(result : T | Promise<T>) {
+  resolve(result ?: T | Promise<T>) : void {
+    this.markResolveChain();
+    this.resolveOne(result);
+  }
+
+  reject(error ?: any) : void {
+    this.markResolveChain();
+    this.rejectOne(error);
+  }
+
+  setResult(result : T | Promise<T>) : void {
     check(!this.errorSet, 'trying to set result on a promise with error already set');
     check(!this.resultSet, 'result already set');
     check(!this.resultPromised, 'result already set (waiting for promise)');
@@ -72,7 +83,7 @@ export class FakePromise<T> implements Promise<T> {
     this.maybeFinishResolving();
   }
 
-  setError(error : any) {
+  setError(error : any) : void {
     check(!this.resultSet, 'trying to set error on a promise with result already set');
     check(!this.errorSet, 'error already set');
     check(!this.resultPromised, 'result already set (waiting for promise)');
@@ -104,15 +115,22 @@ export class FakePromise<T> implements Promise<T> {
     return this.maybeFinishResolving();
   }
 
-  toString() {
-    const { resultPromised, resultSet, errorSet, specified, resolved, rejected } = this;
-    const flags = { resultPromised, resultSet, errorSet, specified, resolved, rejected } as any;
+  toJSON() : any {
+    const { resultPromised, resolveChain, resultSet, errorSet, specified, resolved, rejected } = this;
+    return { resultPromised, resolveChain, resultSet, errorSet, specified, resolved, rejected } as any;
+  }
 
+  toString() : string {
+    const flags = this.toJSON();
     const flagsString = Object.keys(flags)
       .map(key => `${key}=${flags[key]}`)
       .join(',')
     ;
     return `FakePromise#${this.id}{${flagsString}}`;
+  }
+
+  private markResolveChain() {
+    this.resolveChain = true;
   }
 
   private markResolved() {
@@ -127,17 +145,23 @@ export class FakePromise<T> implements Promise<T> {
     this.rejected = true;
   }
 
+  private maybeFinishResolving() {
+    if (!this.specified || !(this.resolved || this.rejected)) {
+      return this.getNextPromise();
+    }
+    if (this.resultSet) {
+      return this.doResolve();
+    }
+    return this.doReject();
+  }
+
   private doResolve() {
     check(this.resultSet, 'trying to resolve a promise without result');
 
-    const next = this.getNextPromise();
-
     if (!hasValue(this.onfulfilled)) {
       // just forward
-      next.setResult(this.result);
-      return next;
+      return this.setNextResult(this.result);
     }
-
     const callback = this.onfulfilled as (arg : T) => any;
     return this.executeAndSetNextResult(callback, this.result);
   }
@@ -147,34 +171,38 @@ export class FakePromise<T> implements Promise<T> {
 
     if (!hasValue(this.onrejected)) {
       // just forward
-      const next = this.getNextPromise();
-      next.setError(this.error);
-      return next;
+      return this.setNextError(this.error);
     }
-
     const callback = this.onrejected as (arg : any) => any;
     return this.executeAndSetNextResult(callback, this.error);
   }
 
   private executeAndSetNextResult(callback : (arg : any) => any, arg : any) {
-    const next = this.getNextPromise();
-
     try {
-      next.setResult(callback(arg as any));
+      return this.setNextResult(callback(arg as any));
     } catch (e) {
-      next.setError(e);
+      return this.setNextError(e);
+    }
+  }
+
+  private setNextResult(result : any) {
+    const next = this.getNextPromise();
+    if (this.resolveChain) {
+      next.resolve(result);
+    } else {
+      next.setResult(result);
     }
     return next;
   }
 
-  private maybeFinishResolving() {
-    if (!this.specified || !(this.resolved || this.rejected)) {
-      return this.getNextPromise();
+  private setNextError(error : any) {
+    const next = this.getNextPromise();
+    if (this.resolveChain) {
+      next.reject(error);
+    } else {
+      next.setError(error);
     }
-    if (this.resultSet) {
-      return this.doResolve();
-    }
-    return this.doReject();
+    return next;
   }
 
   private getNextPromise() {
