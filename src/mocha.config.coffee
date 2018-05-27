@@ -3,6 +3,7 @@ require "source-map-support"
 
 require "should"
 require "should-sinon"
+require "colors"
 
 errors = []
 
