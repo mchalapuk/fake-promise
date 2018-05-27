@@ -84,7 +84,7 @@ export class FakePromise<T> implements Promise<T> {
     this.maybeFinishResolving();
   }
 
-  resolve<TResult = never>(result ?: T | Promise<T>) : FakePromise<TResult> {
+  resolveOne<TResult = never>(result ?: T | Promise<T>) : FakePromise<TResult> {
     check(!this.errorSet, 'trying to resolve a promise containing error');
 
     if (result !== undefined) {
@@ -94,7 +94,7 @@ export class FakePromise<T> implements Promise<T> {
     return this.maybeFinishResolving() ;
   }
 
-  reject<TResult = never>(error ?: any) : FakePromise<TResult> {
+  rejectOne<TResult = never>(error ?: any) : FakePromise<TResult> {
     check(!this.resultSet, 'trying to reject a promise containing result');
 
     if (error !== undefined) {

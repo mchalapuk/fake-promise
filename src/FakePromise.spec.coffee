@@ -25,11 +25,11 @@ describe "FakePromise", ->
     should -> testedPromise.setError null
       .throw "error must not be undefined nor null"
 
-  describe "when after calling .resolve(null)", ->
+  describe "when after calling .resolveOne(null)", ->
     nextPromise = null
 
     beforeEach ->
-      nextPromise = testedPromise.resolve null
+      nextPromise = testedPromise.resolveOne null
       undefined
 
     it "calling .then(callback) calls the callback immediately", ->
@@ -43,9 +43,9 @@ describe "FakePromise", ->
       testedPromise.catch callback
       callback.should.have.callCount 0
 
-    describe "and after calling .resolve(null).resolve()", ->
+    describe "and after calling .resolveOne(null).resolveOne()", ->
       beforeEach ->
-        nextPromise.resolve()
+        nextPromise.resolveOne()
         undefined
 
       it "calling .then(passThrough).then(callback) calls the callback immediately", ->
@@ -56,11 +56,11 @@ describe "FakePromise", ->
         callback.should.have.callCount 1
           .and.have.been.calledWith null
 
-  describe "when after .resolve() without result", ->
+  describe "when after .resolveOne() without result", ->
     nextPromise = null
 
     beforeEach ->
-      nextPromise = testedPromise.resolve()
+      nextPromise = testedPromise.resolveOne()
       undefined
 
     describe "and after calling .setResult(result)", ->
@@ -80,14 +80,14 @@ describe "FakePromise", ->
         testedPromise.catch callback
         callback.should.have.callCount 0
 
-  describe "when after .resolve() with resolved promise as result", ->
+  describe "when after .resolveOne() with resolved promise as result", ->
     nextPromise = null
     result = "result"
 
     beforeEach ->
       resultPromise = new FakePromise
-      resultPromise.resolve result
-      nextPromise = testedPromise.resolve resultPromise
+      resultPromise.resolveOne result
+      nextPromise = testedPromise.resolveOne resultPromise
       undefined
 
     it "calling .then(callback) calls the callback immediately", ->
@@ -101,14 +101,14 @@ describe "FakePromise", ->
       testedPromise.catch callback
       callback.should.have.callCount 0
 
-  describe "when after .resolve() with rejected promise as result", ->
+  describe "when after .resolveOne() with rejected promise as result", ->
     nextPromise = null
     error = new Error "rejected"
 
     beforeEach ->
       resultPromise = new FakePromise
-      resultPromise.reject error
-      nextPromise = testedPromise.resolve resultPromise
+      resultPromise.rejectOne error
+      nextPromise = testedPromise.resolveOne resultPromise
       undefined
 
     it "calling .catch(callback) calls the callback immediately", ->
@@ -122,12 +122,12 @@ describe "FakePromise", ->
       testedPromise.then callback
       callback.should.have.callCount 0
 
-  describe "when after calling .reject(error)", ->
+  describe "when after calling .rejectOne(error)", ->
     error = new Error "test"
     nextPromise = null
 
     beforeEach ->
-      nextPromise = testedPromise.reject error
+      nextPromise = testedPromise.rejectOne error
       undefined
 
     it "calling .catch(callback) calls the callback immediately", ->
@@ -141,9 +141,9 @@ describe "FakePromise", ->
       testedPromise.then callback
       callback.should.have.callCount 0
 
-    describe "and after calling .reject(error).reject()", ->
+    describe "and after calling .rejectOne(error).rejectOne()", ->
       beforeEach ->
-        nextPromise.reject()
+        nextPromise.rejectOne()
         undefined
 
       it "calling .catch(rethrow).catch(callback) calls the callback immediately", ->
@@ -170,16 +170,16 @@ describe "FakePromise", ->
       should -> testedPromise.catch thenCallback
         .throw new Error "promise already specified"
 
-    it ".setResult(undefined).resolve() doesn't throw", ->
+    it ".setResult(undefined).resolveOne() doesn't throw", ->
       testedPromise.setResult undefined
-      testedPromise.resolve()
+      testedPromise.resolveOne()
       undefined
 
-    describe "and after calling .resolve(arg)", ->
+    describe "and after calling .resolveOne(arg)", ->
       arg = "I will behave"
 
       beforeEach ->
-        testedPromise.resolve arg
+        testedPromise.resolveOne arg
         undefined
 
       it "calls proper callback", ->
@@ -195,12 +195,12 @@ describe "FakePromise", ->
         nextPromise.catch catchCallback
         undefined
 
-      describe "and after calling .reject(err).reject()", ->
+      describe "and after calling .rejectOne(err).rejectOne()", ->
         err = new Error "I will never promise again"
 
         beforeEach ->
-          testedPromise.reject err
-            .reject()
+          testedPromise.rejectOne err
+            .rejectOne()
           undefined
 
         it "calls proper callback", ->
@@ -218,11 +218,11 @@ describe "FakePromise", ->
       testedPromise.then thenCallback, catchCallback
       undefined
 
-    describe "and after calling .resolve(arg)", ->
+    describe "and after calling .resolveOne(arg)", ->
       arg = "I will clean my room"
 
       beforeEach ->
-        testedPromise.resolve arg
+        testedPromise.resolveOne arg
         undefined
 
       it "calls proper callback", ->
@@ -230,11 +230,11 @@ describe "FakePromise", ->
       it "passes result to callback", ->
         thenCallback.should.have.been.calledWith arg
 
-    describe "and after calling .reject(err)", ->
+    describe "and after calling .rejectOne(err)", ->
       err = new Error "I will fulfill all promises"
 
       beforeEach ->
-        testedPromise.reject err
+        testedPromise.rejectOne err
         undefined
 
       it "calls proper callback", ->
@@ -252,12 +252,12 @@ describe "FakePromise", ->
         .then thenCallback
       undefined
 
-    describe "and after calling .resolve(arg).resolve()", ->
+    describe "and after calling .resolveOne(arg).resolveOne()", ->
       arg = "I will behave"
 
       beforeEach ->
-        testedPromise.resolve arg
-          .resolve()
+        testedPromise.resolveOne arg
+          .resolveOne()
         undefined
 
       it "calls proper callback", ->
@@ -273,17 +273,17 @@ describe "FakePromise", ->
       resultPromise = new FakePromise
       testedPromise
         .then (arg) ->
-          resultPromise.resolve arg
+          resultPromise.resolveOne arg
           resultPromise
         .then thenCallback
       undefined
 
-    describe "and after calling .resolve(arg).resolve()", ->
+    describe "and after calling .resolveOne(arg).resolveOne()", ->
       arg = "I will behave"
 
       beforeEach ->
-        testedPromise.resolve arg
-          .resolve()
+        testedPromise.resolveOne arg
+          .resolveOne()
         undefined
 
       it "calls proper callback", ->
@@ -299,17 +299,17 @@ describe "FakePromise", ->
       testedPromise
         .then (arg) ->
           resultPromise = new FakePromise
-          resultPromise.reject arg
+          resultPromise.rejectOne arg
           resultPromise
         .catch catchCallback
       undefined
 
-    describe "and after calling .resolve(arg).resolve()", ->
+    describe "and after calling .resolveOne(arg).resolveOne()", ->
       arg = "I will behave"
 
       beforeEach ->
-        testedPromise.resolve arg
-          .reject()
+        testedPromise.resolveOne arg
+          .rejectOne()
         undefined
 
       it "calls proper callback", ->
@@ -327,12 +327,12 @@ describe "FakePromise", ->
         .catch catchCallback
       undefined
 
-    describe "and after calling .reject(arg).reject()", ->
+    describe "and after calling .rejectOne(arg).rejectOne()", ->
       err = new Error "This promise is a fake one"
 
       beforeEach ->
-        testedPromise.reject err
-          .reject()
+        testedPromise.rejectOne err
+          .rejectOne()
         undefined
 
       it "calls proper callback", ->
@@ -348,17 +348,17 @@ describe "FakePromise", ->
       testedPromise
         .catch (err) ->
           resultPromise = new FakePromise
-          resultPromise.reject err
+          resultPromise.rejectOne err
           resultPromise
         .catch catchCallback
       undefined
 
-    describe "and after calling .reject(arg).reject()", ->
+    describe "and after calling .rejectOne(arg).rejectOne()", ->
       err = new Error "This promise is a fake one"
 
       beforeEach ->
-        testedPromise.reject err
-          .reject()
+        testedPromise.rejectOne err
+          .rejectOne()
         undefined
 
       it "calls proper callback", ->
@@ -374,17 +374,17 @@ describe "FakePromise", ->
       resultPromise = new FakePromise
       testedPromise
         .catch (err) ->
-          resultPromise.resolve err.message
+          resultPromise.resolveOne err.message
           resultPromise
         .then thenCallback
       undefined
 
-    describe "and after calling .reject(arg).resolve()", ->
+    describe "and after calling .rejectOne(arg).resolveOne()", ->
       err = "This promise is a fake one"
 
       beforeEach ->
-        testedPromise.reject new Error err
-          .resolve()
+        testedPromise.rejectOne new Error err
+          .resolveOne()
         undefined
 
       it "calls proper callback", ->
@@ -401,18 +401,18 @@ describe "FakePromise", ->
     it "calling .setResult(...) again throws an error", ->
       should -> testedPromise.setResult expectedResult
         .throw "result already set"
-    it "calling .resolve(result) throws an error", ->
-      should -> testedPromise.resolve expectedResult
+    it "calling .resolveOne(result) throws an error", ->
+      should -> testedPromise.resolveOne expectedResult
         .throw "result already set"
     it "calling .setError(...) throws an error", ->
       should -> testedPromise.setError new Error 'test'
         .throw "trying to set error on a promise with result already set"
-    it "calling .reject() throws an error", ->
-      should -> testedPromise.reject()
+    it "calling .rejectOne() throws an error", ->
+      should -> testedPromise.rejectOne()
         .throw "trying to reject a promise containing result"
 
-    it "calling .resolve() does not throw", ->
-      testedPromise.resolve().resolve()
+    it "calling .resolveOne() does not throw", ->
+      testedPromise.resolveOne().resolveOne()
       testedPromise.then (result) -> result.should.eql expectedResult
 
   describe "when after .setResult(resolvedPromise) called", ->
@@ -420,24 +420,24 @@ describe "FakePromise", ->
 
     beforeEach ->
       resultPromise = new FakePromise
-      resultPromise.resolve expectedResult
+      resultPromise.resolveOne expectedResult
       testedPromise.setResult resultPromise
 
     it "calling .setResult(...) again throws an error", ->
       should -> testedPromise.setResult expectedResult
         .throw "result already set"
-    it "calling .resolve(result) throws an error", ->
-      should -> testedPromise.resolve expectedResult
+    it "calling .resolveOne(result) throws an error", ->
+      should -> testedPromise.resolveOne expectedResult
         .throw "result already set"
     it "calling .setError(...) throws an error", ->
       should -> testedPromise.setError new Error 'test'
         .throw "trying to set error on a promise with result already set"
-    it "calling .reject() throws an error", ->
-      should -> testedPromise.reject()
+    it "calling .rejectOne() throws an error", ->
+      should -> testedPromise.rejectOne()
         .throw "trying to reject a promise containing result"
 
-    it "calling .resolve() does not throw", ->
-      testedPromise.resolve().resolve()
+    it "calling .resolveOne() does not throw", ->
+      testedPromise.resolveOne().resolveOne()
       testedPromise.then (result) -> result.should.eql expectedResult
 
   describe "when after .setError(error) called", ->
@@ -449,18 +449,18 @@ describe "FakePromise", ->
     it "calling .setError(...) again throws an error", ->
       should -> testedPromise.setError expectedError
         .throw "error already set"
-    it "calling .reject(error) throws an error", ->
-      should -> testedPromise.reject expectedError
+    it "calling .rejectOne(error) throws an error", ->
+      should -> testedPromise.rejectOne expectedError
         .throw "error already set"
     it "calling .setError(...) throws an error", ->
       should -> testedPromise.setResult {}
         .throw "trying to set result on a promise with error already set"
-    it "calling .resolve() throws an error", ->
-      should () -> testedPromise.resolve()
+    it "calling .resolveOne() throws an error", ->
+      should () -> testedPromise.resolveOne()
         .throw "trying to resolve a promise containing error"
 
-    it "calling .reject() does not throw", ->
-      testedPromise.reject().resolve()
+    it "calling .rejectOne() does not throw", ->
+      testedPromise.rejectOne().resolveOne()
       testedPromise.then(
         -> throw new Error "expected rejection"
         (error) -> error.should.eql expectedError
@@ -471,24 +471,24 @@ describe "FakePromise", ->
 
     beforeEach ->
       resultPromise = new FakePromise
-      resultPromise.reject expectedError
+      resultPromise.rejectOne expectedError
       testedPromise.setResult resultPromise
 
     it "calling .setError(...) again throws an error", ->
       should -> testedPromise.setError expectedError
         .throw "error already set"
-    it "calling .reject(error) throws an error", ->
-      should -> testedPromise.reject expectedError
+    it "calling .rejectOne(error) throws an error", ->
+      should -> testedPromise.rejectOne expectedError
         .throw "error already set"
     it "calling .setError(...) throws an error", ->
       should -> testedPromise.setResult {}
         .throw "trying to set result on a promise with error already set"
-    it "calling .resolve() throws an error", ->
-      should () -> testedPromise.resolve()
+    it "calling .resolveOne() throws an error", ->
+      should () -> testedPromise.resolveOne()
         .throw "trying to resolve a promise containing error"
 
-    it "calling .reject() does not throw", ->
-      testedPromise.reject().resolve()
+    it "calling .rejectOne() does not throw", ->
+      testedPromise.rejectOne().resolveOne()
       testedPromise.then(
         -> throw new Error "expected rejection"
         (error) -> error.should.eql expectedError
@@ -500,8 +500,8 @@ describe "FakePromise", ->
     beforeEach ->
       testedPromise.setResult expectedResult
 
-    it "calling .resolve() does not throw", ->
-      testedPromise.resolve().resolve()
+    it "calling .resolveOne() does not throw", ->
+      testedPromise.resolveOne().resolveOne()
       testedPromise.then (result) -> (should result).equal expectedResult
 
 indent = 0
