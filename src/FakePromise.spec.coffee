@@ -18,14 +18,11 @@ describe "FakePromise", ->
     testedPromise = new FakePromise
     undefined
 
-  [ null, undefined ].forEach (arg) ->
-    it "calling .setError(#{arg}) throws", ->
-      should -> testedPromise.setError arg
-        .throw "error must not be undefined nor null"
-  [ 'reject', 'rejectOne' ].forEach (methodName) ->
-    it "calling .#{methodName}(null) throws", ->
-      should -> testedPromise[methodName] null
-        .throw "error must not be undefined nor null"
+  [ 'setError', 'reject', 'rejectOne' ].forEach (methodName) ->
+    [ null, undefined ].forEach (arg) ->
+      it "calling .#{methodName}(#{arg}) throws", ->
+        should -> testedPromise[methodName] arg
+          .throw "error must not be undefined nor null"
 
   describe "when after calling .resolve(result)", ->
     expectedResult = {}
@@ -184,18 +181,23 @@ describe "FakePromise", ->
       testedPromise.then callback
       callback.should.have.callCount 0
 
-    describe "and after calling .rejectOne(error).rejectOne()", ->
+    describe "and after calling .catch(rethrow)", ->
+      nextPromise = null
+
       beforeEach ->
-        nextPromise.rejectOne()
+        nextPromise = testedPromise.catch (me) -> throw me
         undefined
 
-      it "calling .catch(rethrow).catch(callback) calls the callback immediately", ->
-        callback = sinon.spy()
-        testedPromise
-          .catch (me) -> throw me
-          .catch callback
-        callback.should.have.callCount 1
-          .and.have.been.calledWith error
+      describe "and after calling .rejectOne(error).rejectOne()", ->
+        beforeEach ->
+          nextPromise.rejectOne()
+          undefined
+
+        it "calling .catch(callback) calls the callback immediately", ->
+          callback = sinon.spy()
+          nextPromise.catch callback
+          callback.should.have.callCount 1
+            .and.have.been.calledWith error
 
   describe "when after .then(onfulfilled) specified", ->
     thenCallback = null

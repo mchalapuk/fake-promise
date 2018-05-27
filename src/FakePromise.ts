@@ -52,6 +52,11 @@ export class FakePromise<T> implements Promise<T> {
     this.resolveOne(result);
   }
 
+  /**
+   * @pre promise is not rejected or resolved
+   * @pre given error is not undefined nor null or .setError(error) was called before
+   * @post promise is rejected
+   */
   reject(error ?: any) : void {
     this.markResolveChain();
     this.rejectOne(error);
@@ -83,6 +88,12 @@ export class FakePromise<T> implements Promise<T> {
     this.maybeFinishResolving();
   }
 
+  /**
+   * @pre .setError(error) was not called before
+   * @pre promise is not already resolved (or rejected)
+   * @post .reject() and .rejectOne() can be called without argument
+   * @post .setError(), .setResult(), .resolve() and .resolveOne() can not be called
+   */
   setError(error : any) : void {
     check(!this.resultSet, 'trying to set error on a promise with result already set');
     check(!this.errorSet, 'error already set');
@@ -95,6 +106,11 @@ export class FakePromise<T> implements Promise<T> {
     this.maybeFinishResolving();
   }
 
+  /**
+   * @pre promise is not rejected or resolved
+   * @pre given error is not undefined nor null or .setError(error) was called before
+   * @post promise is rejected
+   */
   resolveOne<TResult = never>(result ?: T | Promise<T>) : FakePromise<TResult> {
     check(!this.errorSet, 'trying to resolve a promise containing error');
 
@@ -111,6 +127,8 @@ export class FakePromise<T> implements Promise<T> {
     if (error !== undefined) {
       this.setError(error);
     }
+    check(this.errorSet, 'error must not be undefined nor null');
+
     this.markRejected();
     return this.maybeFinishResolving();
   }
