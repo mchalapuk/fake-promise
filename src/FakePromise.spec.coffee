@@ -587,10 +587,20 @@ describe "FakePromise", ->
     beforeEach ->
       testedPromise.setResult expectedResult
 
-    it "calling .resolveOne() does not throw", ->
+    it "calling .resolveOne() and .then() resolves the promise", ->
       testedPromise.resolveOne().resolveOne()
       testedPromise.then (result) -> (should result).equal expectedResult
-    it "calling .resolve() does not throw", ->
+    it "calling .resolve() and .then() resolves the promise", ->
+      testedPromise.resolve()
+      testedPromise.then (result) -> (should result).equal expectedResult
+
+  describe "when without calling .setResult()", ->
+    expectedResult = undefined
+
+    it "calling .resolveOne() and .then() resolves the promise", ->
+      testedPromise.resolveOne().resolveOne()
+      testedPromise.then (result) -> (should result).equal expectedResult
+    it "calling .resolve() and .then() resolves the promise", ->
       testedPromise.resolve()
       testedPromise.then (result) -> (should result).equal expectedResult
 

@@ -47,6 +47,10 @@ export class FakePromise<T> implements Promise<T> {
     return this.maybeFinishResolving();
   }
 
+  /**
+   * @pre promise is not rejected or resolved
+   * @post promise is resolved
+   */
   resolve(result ?: T | Promise<T>) : void {
     this.markResolveChain();
     this.resolveOne(result);
@@ -62,6 +66,12 @@ export class FakePromise<T> implements Promise<T> {
     this.rejectOne(error);
   }
 
+  /**
+   * @pre promise is not rejected or resolved
+   * @pre .setResult() was not called
+   * @post .setResult() can not be called
+   * @post .resolve() and .resolveOne() can not be called with result argument
+   */
   setResult(result : T | Promise<T>) : void {
     check(!this.errorSet, 'trying to set result on a promise with error already set');
     check(!this.resultSet, 'result already set');
@@ -108,8 +118,7 @@ export class FakePromise<T> implements Promise<T> {
 
   /**
    * @pre promise is not rejected or resolved
-   * @pre given error is not undefined nor null or .setError(error) was called before
-   * @post promise is rejected
+   * @post promise is resolved
    */
   resolveOne<TResult = never>(result ?: T | Promise<T>) : FakePromise<TResult> {
     check(!this.errorSet, 'trying to resolve a promise containing error');
@@ -121,6 +130,11 @@ export class FakePromise<T> implements Promise<T> {
     return this.maybeFinishResolving() ;
   }
 
+  /**
+   * @pre promise is not rejected or resolved
+   * @pre given error is not undefined nor null or .setError(error) was called before
+   * @post promise is rejected
+   */
   rejectOne<TResult = never>(error ?: any) : FakePromise<TResult> {
     check(!this.resultSet, 'trying to reject a promise containing result');
 
@@ -167,15 +181,24 @@ export class FakePromise<T> implements Promise<T> {
     if (!this.specified || !(this.resolved || this.rejected)) {
       return this.getNextPromise();
     }
-    if (this.resultSet) {
-      return this.doResolve();
+    if (this.errorSet) {
+      return this.doReject();
     }
-    return this.doReject();
+    // TRADEOFF: Resolving even if this.resultSet is false.
+    //
+    // Upsides:
+    // * Calling .resolve() without result argument and without
+    //  previously calling .setResult(undefined) is possible.
+    //
+    // Downsides:
+    // * This.result may be undefined at this point
+    //  which may not be compatible with T.
+    // * Setting result after calling .resolve() is possible but only
+    //  before the promise is specified (.then() or .catch() is called).
+    return this.doResolve();
   }
 
   private doResolve() {
-    check(this.resultSet, 'trying to resolve a promise without result');
-
     if (!hasValue(this.onfulfilled)) {
       // just forward
       return this.setNextResult(this.result);
@@ -185,8 +208,6 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   private doReject() {
-    check(this.errorSet, 'trying to reject a promise without error');
-
     if (!hasValue(this.onrejected)) {
       // just forward
       return this.setNextError(this.error);
