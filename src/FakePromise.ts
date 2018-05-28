@@ -6,22 +6,24 @@ let nextId = 0;
  */
 export class FakePromise<T> implements Promise<T> {
   /**
+   * @param result with which returned promise will be resolved
+   * @return new resolved promise
+   * @post .setError(), .setResult(), .resolve() and .reject() can not be called on returned promise
+   */
+  static resolve<T = void>(result ?: Promise<T> | T) : FakePromise<T> {
+    const promise = new FakePromise<T>();
+    promise.resolve(result);
+    return promise;
+  }
+
+  /**
+   * @param error error with which returned promise will be rejected
    * @return new rejected promise
    * @post .setError(), .setResult(), .resolve() and .reject() can not be called on returned promise
    */
   static reject<T = void>(error : any) : FakePromise<T> {
     const promise = new FakePromise<T>();
     promise.reject(error);
-    return promise;
-  }
-
-  /**
-   * @return new resolved promise
-   * @post .setError(), .setResult(), .resolve() and .reject() can not be called on returned promise
-   */
-  static resolve<T = void>(result : T) : FakePromise<T> {
-    const promise = new FakePromise<T>();
-    promise.resolve(result);
     return promise;
   }
 
@@ -68,6 +70,7 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   /**
+   * @param result with which promise will be resolved
    * @pre promise is not rejected or resolved
    * @post promise is resolved
    */
@@ -77,6 +80,7 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   /**
+   * @param error error with which promise will be rejected
    * @pre promise is not rejected or resolved
    * @pre given error is not undefined nor null or .setError(error) was called before
    * @post promise is rejected
@@ -87,6 +91,7 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   /**
+   * @param result with which promise will be resolved
    * @pre promise is not rejected or resolved
    * @pre .setResult() was not called
    * @post .setResult() can not be called
@@ -119,6 +124,7 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   /**
+   * @param error error with which promise will be rejected
    * @pre given error is not null nor undefined
    * @pre .setError(error) was not called before
    * @pre promise is not already resolved (or rejected)
@@ -138,6 +144,8 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   /**
+   * @param result with which promise will be resolved
+   * @return next promise in the chain (not resolved nor rejected)
    * @pre promise is not rejected or resolved
    * @post promise is resolved
    */
@@ -152,6 +160,8 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   /**
+   * @param error error with which promise will be rejected
+   * @return next promise in the chain (not resolved nor rejected)
    * @pre promise is not rejected or resolved
    * @pre given error is not undefined nor null or .setError(error) was called before
    * @post promise is rejected
