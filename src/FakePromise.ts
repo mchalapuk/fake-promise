@@ -5,6 +5,26 @@ let nextId = 0;
  * @author Maciej Chałapuk (maciej@chalapuk.pl)
  */
 export class FakePromise<T> implements Promise<T> {
+  /**
+   * @return new rejected promise
+   * @post .setError(), .setResult(), .resolve() and .reject() can not be called on returned promise
+   */
+  static reject<T = void>(error : any) : FakePromise<T> {
+    const promise = new FakePromise<T>();
+    promise.reject(error);
+    return promise;
+  }
+
+  /**
+   * @return new resolved promise
+   * @post .setError(), .setResult(), .resolve() and .reject() can not be called on returned promise
+   */
+  static resolve<T = void>(result : T) : FakePromise<T> {
+    const promise = new FakePromise<T>();
+    promise.resolve(result);
+    return promise;
+  }
+
   private onfulfilled ?: ((value: T) => any) | null;
   private onrejected ?: ((reason: any) => any) | null;
 
@@ -99,6 +119,7 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   /**
+   * @pre given error is not null nor undefined
    * @pre .setError(error) was not called before
    * @pre promise is not already resolved (or rejected)
    * @post .reject() and .rejectOne() can be called without argument

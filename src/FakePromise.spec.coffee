@@ -7,6 +7,119 @@ FakePromise = require "./FakePromise"
 describe "FakePromise", ->
   testedPromise = null
 
+  [ null, undefined ].forEach (arg) ->
+    it "calling static .reject(#{arg}) throws", ->
+      should -> FakePromise.reject arg
+        .throw "error must not be undefined nor null"
+
+  describe "when constructed with Promise.reject(error)", ->
+    expectedError = new Error "test"
+
+    beforeEach ->
+      testedPromise = FakePromise.reject expectedError
+      undefined
+
+    it "calling .setError(...) again throws an error", ->
+      should -> testedPromise.setError expectedError
+        .throw "error already set"
+    it "calling .reject(error) throws an error", ->
+      should -> testedPromise.reject expectedError
+        .throw "error already set"
+    it "calling .rejectOne(error) throws an error", ->
+      should -> testedPromise.rejectOne expectedError
+        .throw "error already set"
+    it "calling .reject() throws an error", ->
+      should -> testedPromise.reject()
+        .throw "promise already rejected"
+    it "calling .rejectOne() throws an error", ->
+      should -> testedPromise.rejectOne()
+        .throw "promise already rejected"
+    it "calling .setResult(...) throws an error", ->
+      should -> testedPromise.setResult {}
+        .throw "trying to set result on a promise with error already set"
+    it "calling .resolve() throws an error", ->
+      should () -> testedPromise.resolve()
+        .throw "trying to resolve a promise containing error"
+    it "calling .resolveOne() throws an error", ->
+      should () -> testedPromise.resolveOne()
+        .throw "trying to resolve a promise containing error"
+
+    it "resolves full promise chain", ->
+      testedPromise
+        .catch (err) ->
+          err.should.equal expectedError
+          err
+        .then (err) ->
+          err.should.equal expectedError
+          throw err
+        .then(
+          (result) -> throw new Error "expected rejection"
+          (err) -> err.should.equal expectedError
+        )
+
+    it "forwards the error to next promise in chain", ->
+      testedPromise
+        .then (result) ->
+          throw new Error "expected rejection got result: #{result}"
+        .then(
+          (result) -> throw new Error "expected rejection got result: #{result}"
+          (err) -> err.should.equal expectedError
+        )
+
+  describe "when constructed with Promise.resolve(result)", ->
+    expectedResult = result: "test"
+
+    beforeEach ->
+      testedPromise = FakePromise.resolve expectedResult
+      undefined
+
+    it "calling .setError(...) again throws an error", ->
+      should -> testedPromise.setError new Error "test"
+        .throw "trying to set error on a promise with result already set"
+    it "calling .reject(error) throws an error", ->
+      should -> testedPromise.reject new Error "test"
+        .throw "trying to reject a promise containing result"
+    it "calling .rejectOne(error) throws an error", ->
+      should -> testedPromise.rejectOne new Error "test"
+        .throw "trying to reject a promise containing result"
+    it "calling .reject() throws an error", ->
+      should -> testedPromise.reject()
+        .throw "trying to reject a promise containing result"
+    it "calling .rejectOne() throws an error", ->
+      should -> testedPromise.rejectOne()
+        .throw "trying to reject a promise containing result"
+    it "calling .setResult(...) throws an error", ->
+      should -> testedPromise.setResult {}
+        .throw "result already set"
+    it "calling .resolve() throws an error", ->
+      should () -> testedPromise.resolve()
+        .throw "promise already resolved"
+    it "calling .resolveOne() throws an error", ->
+      should () -> testedPromise.resolveOne()
+        .throw "promise already resolved"
+
+    it "resolves full promise chain", ->
+      error = new Error "error"
+
+      testedPromise
+        .then (result) ->
+          result.should.equal expectedResult
+          throw error
+        .catch (err) ->
+          err.should.equal error
+          err
+        .catch(
+          (result) -> throw new Error "expected rejection got result: #{result}"
+          (err) -> err.should.equal error
+        )
+
+    it "forwards the result to next promise in chain", ->
+      testedPromise
+        .catch (err) ->
+          throw err
+        .then (result) ->
+          result.should.equal expectedResult
+
   describe "when instantiated with new", ->
     beforeEach ->
       testedPromise = new FakePromise
