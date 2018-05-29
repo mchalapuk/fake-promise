@@ -31,12 +31,12 @@
   },
   "homepage": "https://github.com/mchalapuk/fake-promise#readme",
   "devDependencies": {
-    "coffeescript": "^1.12.7",
+    "coffeescript": "^2.3.1",
     "colors": "^1.3.0",
-    "mocha": "^3.5.3",
+    "mocha": "^5.2.0",
     "should": "^13.2.1",
     "should-sinon": "0.0.6",
-    "sinon": "^3.3.0",
+    "sinon": "^5.0.10",
     "source-map-support": "^0.5.6",
     "typescript": "^2.8.3"
   },
