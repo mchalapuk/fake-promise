@@ -1,0 +1,38 @@
+export declare class FakePromise<T> implements Promise<T> {
+    static resolve<T = void>(result?: Promise<T> | T): FakePromise<T>;
+    static reject<T = void>(error: any): FakePromise<T>;
+    private onfulfilled?;
+    private onrejected?;
+    private nextPromise?;
+    private result;
+    private error;
+    private id;
+    private resultPromised;
+    private resolveChain;
+    private resultSet;
+    private errorSet;
+    private specified;
+    private resolved;
+    private rejected;
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null): Promise<TResult1 | TResult2>;
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult>;
+    resolve(result?: T | Promise<T>): void;
+    reject(error?: any): void;
+    setResult(result: T | Promise<T>): void;
+    setError(error: any): void;
+    resolveOne<TResult = never>(result?: T | Promise<T>): FakePromise<TResult>;
+    rejectOne<TResult = never>(error?: any): FakePromise<TResult>;
+    toJSON(): any;
+    toString(): string;
+    private markResolveChain();
+    private markResolved();
+    private markRejected();
+    private maybeFinishResolving();
+    private doResolve();
+    private doReject();
+    private executeAndSetNextResult(callback, arg);
+    private setNextResult(result);
+    private setNextError(error);
+    private getNextPromise();
+}
+export default FakePromise;

@@ -2,6 +2,7 @@
   "compilerOptions": {
     "allowJs": false,
     "alwaysStrict": true,
+    "declaration": true,
     "forceConsistentCasingInFileNames": true,
     "lib": [
       "ES5",
@@ -29,7 +30,6 @@
   },
   "include": [
     "src/**/*.ts",
-    "index.d.ts"
   ]
 }
 
