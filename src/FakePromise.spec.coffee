@@ -10,7 +10,7 @@ describe "FakePromise", ->
   [ null, undefined ].forEach (arg) ->
     it "calling static .reject(#{arg}) throws", ->
       should -> FakePromise.reject arg
-        .throw "error must not be undefined nor null"
+        .throw /error must not be undefined nor null.*/
 
   describe "when constructed with Promise.reject(error)", ->
     expectedError = new Error "test"
@@ -129,7 +129,7 @@ describe "FakePromise", ->
       [ null, undefined ].forEach (arg) ->
         it "calling .#{methodName}(#{arg}) throws", ->
           should -> testedPromise[methodName] arg
-            .throw "error must not be undefined nor null"
+            .throw /error must not be undefined nor null.*/
 
     describe "when after calling .resolve(result)", ->
       expectedResult = {}

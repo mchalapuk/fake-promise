@@ -1,5 +1,6 @@
 
 let nextId = 0;
+const SPACES = '                                                              ';
 
 /**
  * @author Maciej Chałapuk (maciej@chalapuk.pl)
@@ -56,12 +57,12 @@ export class FakePromise<T> implements Promise<T> {
     onfulfilled ?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected ?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null
   ): Promise<TResult1 | TResult2> {
-    check(!this.specified, 'promise already specified', this.specifyTrace);
+    this.check(!this.specified, 'promise already specified', this.specifyTrace);
 
     this.onfulfilled = onfulfilled;
     this.onrejected = onrejected;
     this.specified = true;
-    this.specifyTrace = trace('specification');
+    this.specifyTrace = this.trace('specification');
 
     return this.maybeFinishResolving();
   }
@@ -101,17 +102,17 @@ export class FakePromise<T> implements Promise<T> {
    * @post .resolve() and .resolveOne() can not be called with result argument
    */
   setResult(result : T | Promise<T>) : void {
-    check(
+    this.check(
       !this.errorSet,
       'trying to set result on a promise with error already set',
       this.errorTrace,
     );
-    check(
+    this.check(
       !this.resultSet,
       'result already set',
       this.resultTrace,
     );
-    check(
+    this.check(
       !this.resultPromised,
       'result already set (waiting for promise)',
       this.promiseTrace,
@@ -119,7 +120,7 @@ export class FakePromise<T> implements Promise<T> {
 
     if (isPromise(result)) {
       this.resultPromised = true;
-      this.promiseTrace = trace('setting promise as a result');
+      this.promiseTrace = this.trace('setting promise as a result');
 
       result.then(
         result => {
@@ -136,7 +137,7 @@ export class FakePromise<T> implements Promise<T> {
 
     this.resultSet = true;
     this.result = result;
-    this.resultTrace = trace('setting result');
+    this.resultTrace = this.trace('setting result');
 
     this.maybeFinishResolving();
   }
@@ -150,29 +151,29 @@ export class FakePromise<T> implements Promise<T> {
    * @post .setError(), .setResult(), .resolve() and .resolveOne() can not be called
    */
   setError(error : any) : void {
-    check(
+    this.check(
       !this.resultSet,
       'trying to set error on a promise with result already set',
       this.resultTrace,
     );
-    check(
+    this.check(
       !this.errorSet,
       'error already set',
       this.errorTrace,
     );
-    check(
+    this.check(
       !this.resultPromised,
       'result already set (waiting for promise)',
       this.promiseTrace,
     );
-    check(
+    this.check(
       hasValue(error),
       'error must not be undefined nor null',
     );
 
     this.errorSet = true;
     this.error = error;
-    this.errorTrace = trace('setting error');
+    this.errorTrace = this.trace('setting error');
 
     this.maybeFinishResolving();
   }
@@ -184,7 +185,7 @@ export class FakePromise<T> implements Promise<T> {
    * @post promise is resolved
    */
   resolveOne<TResult = never>(result ?: T | Promise<T>) : FakePromise<TResult> {
-    check(
+    this.check(
       !this.errorSet,
       'trying to resolve a promise containing error',
       this.errorTrace,
@@ -205,7 +206,7 @@ export class FakePromise<T> implements Promise<T> {
    * @post promise is rejected
    */
   rejectOne<TResult = never>(error ?: any) : FakePromise<TResult> {
-    check(
+    this.check(
       !this.resultSet,
       'trying to reject a promise containing result',
       this.resultTrace,
@@ -214,24 +215,32 @@ export class FakePromise<T> implements Promise<T> {
     if (error !== undefined) {
       this.setError(error);
     }
-    check(this.errorSet, 'error must not be undefined nor null');
+    this.check(this.errorSet, 'error must not be undefined nor null');
 
     this.markRejected();
     return this.maybeFinishResolving();
   }
 
   toJSON() : any {
-    const { resultPromised, resolveChain, resultSet, errorSet, specified, resolved, rejected } = this;
-    return { resultPromised, resolveChain, resultSet, errorSet, specified, resolved, rejected } as any;
+    const { id, resultPromised, resolveChain, resultSet, errorSet, specified, resolved, rejected } = this;
+    return { id, resultPromised, resolveChain, resultSet, errorSet, specified, resolved, rejected } as any;
   }
 
-  toString() : string {
+  toString(indent ?: number) : string {
     const flags = this.toJSON();
-    const flagsString = Object.keys(flags)
-      .map(key => `${key}=${flags[key]}`)
-      .join(',')
+    const keys = Object.keys(flags)
+      .filter(key => key !== 'id')
+      .filter(key => flags[key])
     ;
-    return `FakePromise#${this.id}{${flagsString}}`;
+
+    if (!indent) {
+      const stringifiedFlags = keys.map(key => `${key}: ${flags[key]}`);
+      return `FakePromise#${this.id}{${stringifiedFlags.join(',')}}`;
+    }
+
+    const prefix = SPACES.substring(0, indent);
+    const stringifiedFlags = keys.map(key => `${prefix}  ${key}: ${flags[key]},\n`);
+    return `${prefix}FakePromise#${this.id} {\n${stringifiedFlags.join('')}${prefix}}`;
   }
 
   private markResolveChain() {
@@ -239,19 +248,19 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   private markResolved() {
-    check(!this.resolved, 'promise already resolved', this.resolveTrace);
-    check(!this.rejected, 'promise already rejected', this.rejectTrace);
+    this.check(!this.resolved, 'promise already resolved', this.resolveTrace);
+    this.check(!this.rejected, 'promise already rejected', this.rejectTrace);
 
     this.resolved = true;
-    this.resolveTrace = trace('resolve');
+    this.resolveTrace = this.trace('resolve');
   }
 
   private markRejected() {
-    check(!this.resolved, 'promise already resolved', this.resolveTrace);
-    check(!this.rejected, 'promise already rejected', this.rejectTrace);
+    this.check(!this.resolved, 'promise already resolved', this.resolveTrace);
+    this.check(!this.rejected, 'promise already rejected', this.rejectTrace);
 
     this.rejected = true;
-    this.rejectTrace = trace('reject');
+    this.rejectTrace = this.trace('reject');
   }
 
   private maybeFinishResolving() {
@@ -327,15 +336,34 @@ export class FakePromise<T> implements Promise<T> {
     }
     return this.nextPromise;
   }
+
+  private check(condition : boolean, message : string, stacktrace ?: string) {
+    if (!condition) {
+      const formattedState = `\n    CURRENT STATE:\n${this.toString(6)}`;
+      throw new Error(`${message}${formattedState}${stacktrace ? stacktrace : ''}`);
+    }
+  }
+
+  private trace(name : string) {
+    const stateTitle = `state after ${name}`.toUpperCase();
+    const formattedState = `    ${stateTitle}:\n${this.toString(6)}`;
+
+    const error = new Error('error');
+    const stack = error.stack as string;
+    const traceTitle = `stacktrace of ${name}`.toUpperCase();
+    const firstNewline = stack.indexOf('\n');
+    const secondNewline = stack.indexOf('\n', firstNewline + 1);
+    const formattedStack = `  ${traceTitle}:${stack.substring(secondNewline)}\n  EOS`
+      .split('\n')
+      .map(line => `  ${line}`)
+      .join('\n')
+    ;
+
+    return `\n${formattedState}\n${formattedStack}`;
+  }
 }
 
 export default FakePromise;
-
-function check(condition : boolean, message : string, stacktrace ?: string) {
-  if (!condition) {
-    throw new Error(`${message}${stacktrace ? stacktrace : ''}`);
-  }
-}
 
 function hasValue(arg : any | null | undefined) {
   return (arg !== null && arg !== undefined);
@@ -343,20 +371,5 @@ function hasValue(arg : any | null | undefined) {
 
 function isPromise<T>(arg : T | Promise<T>): arg is Promise<T> {
   return hasValue(arg) && typeof (arg as any).then === 'function';
-}
-
-function trace(name : string) {
-  const error = new Error('error');
-  const stack = error.stack as string;
-  const title = `stacktrace of ${name}`.toUpperCase();
-
-  const firstNewline = stack.indexOf('\n');
-  const secondNewline = stack.indexOf('\n', firstNewline + 1);
-
-  return `\n  ${title}:${stack.substring(secondNewline)}\n  EOS`
-    .split('\n')
-    .map(line => `  ${line}`)
-    .join('\n')
-  ;
 }
 

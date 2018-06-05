@@ -29,7 +29,7 @@ export declare class FakePromise<T> implements Promise<T> {
     resolveOne<TResult = never>(result?: T | Promise<T>): FakePromise<TResult>;
     rejectOne<TResult = never>(error?: any): FakePromise<TResult>;
     toJSON(): any;
-    toString(): string;
+    toString(indent?: number): string;
     private markResolveChain();
     private markResolved();
     private markRejected();
@@ -40,5 +40,7 @@ export declare class FakePromise<T> implements Promise<T> {
     private setNextResult(result);
     private setNextError(error);
     private getNextPromise();
+    private check(condition, message, stacktrace?);
+    private trace(name);
 }
 export default FakePromise;
