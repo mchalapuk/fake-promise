@@ -172,6 +172,42 @@ describe "FakePromise", ->
             (err) -> err.should.equal expectedError
           )
 
+    describe "when after calling .resolve(resultPromise)", ->
+      resultPromise = null
+
+      beforeEach ->
+        resultPromise = new FakePromise
+        testedPromise.resolve resultPromise
+
+      it "throws when calling .setResult", ->
+        should -> testedPromise.setResult {}
+          .throw /result already set \(waiting for promise\).*/
+      it "throws when calling .setError", ->
+        should -> testedPromise.setError {}
+          .throw /result already set \(waiting for promise\).*/
+      it "throws when calling .resolve", ->
+        should -> testedPromise.resolve {}
+          .throw /result already set \(waiting for promise\).*/
+      it "throws when calling .reject", ->
+        should -> testedPromise.reject {}
+          .throw /result already set \(waiting for promise\).*/
+      it "throws when calling .resolveOne", ->
+        should -> testedPromise.resolveOne {}
+          .throw /result already set \(waiting for promise\).*/
+      it "throws when calling .rejectOne", ->
+        should -> testedPromise.rejectOne {}
+          .throw /result already set \(waiting for promise\).*/
+
+      describe "and after resolving resultPromise", ->
+        expectedResult = {}
+
+        beforeEach ->
+          resultPromise.resolve expectedResult
+
+        it "resolves the promise", ->
+          testedPromise.then (result) ->
+            result.should.equal expectedResult
+
     describe "when after calling .resolveOne(null)", ->
       nextPromise = null
 
