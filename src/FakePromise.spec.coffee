@@ -208,6 +208,25 @@ describe "FakePromise", ->
           testedPromise.then (result) ->
             result.should.equal expectedResult
 
+        describe "and after .then(returnAnotherPromise)", ->
+          testedPromise2 = null
+          returnedPromise = null
+
+          beforeEach ->
+            returnedPromise = new FakePromise
+            testedPromise2 = testedPromise.then -> returnedPromise
+            undefined
+
+          describe "and after resoling returned promise", ->
+            expectedResult2 = {}
+
+            beforeEach ->
+              returnedPromise.resolve expectedResult2
+
+            it "resolves the promise chain", ->
+              testedPromise2.then (result2) ->
+                result2.should.equal expectedResult2
+
     describe "when after calling .resolveOne(null)", ->
       nextPromise = null
 
