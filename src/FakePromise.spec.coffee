@@ -21,28 +21,28 @@ describe "FakePromise", ->
 
     it "calling .setError(...) again throws an error", ->
       should -> testedPromise.setError expectedError
-        .throw "error already set"
+        .throw /error already set.*/
     it "calling .reject(error) throws an error", ->
       should -> testedPromise.reject expectedError
-        .throw "error already set"
+        .throw /error already set.*/
     it "calling .rejectOne(error) throws an error", ->
       should -> testedPromise.rejectOne expectedError
-        .throw "error already set"
+        .throw /error already set.*/
     it "calling .reject() throws an error", ->
       should -> testedPromise.reject()
-        .throw "promise already rejected"
+        .throw /promise already rejected.*/
     it "calling .rejectOne() throws an error", ->
       should -> testedPromise.rejectOne()
-        .throw "promise already rejected"
+        .throw /promise already rejected.*/
     it "calling .setResult(...) throws an error", ->
       should -> testedPromise.setResult {}
-        .throw "trying to set result on a promise with error already set"
+        .throw /trying to set result on a promise with error already set.*/
     it "calling .resolve() throws an error", ->
       should () -> testedPromise.resolve()
-        .throw "trying to resolve a promise containing error"
+        .throw /trying to resolve a promise containing error.*/
     it "calling .resolveOne() throws an error", ->
       should () -> testedPromise.resolveOne()
-        .throw "trying to resolve a promise containing error"
+        .throw /trying to resolve a promise containing error.*/
 
     it "resolves full promise chain", ->
       testedPromise
@@ -75,28 +75,28 @@ describe "FakePromise", ->
 
     it "calling .setError(...) again throws an error", ->
       should -> testedPromise.setError new Error "test"
-        .throw "trying to set error on a promise with result already set"
+        .throw /trying to set error on a promise with result already set.*/
     it "calling .reject(error) throws an error", ->
       should -> testedPromise.reject new Error "test"
-        .throw "trying to reject a promise containing result"
+        .throw /trying to reject a promise containing result.*/
     it "calling .rejectOne(error) throws an error", ->
       should -> testedPromise.rejectOne new Error "test"
-        .throw "trying to reject a promise containing result"
+        .throw /trying to reject a promise containing result.*/
     it "calling .reject() throws an error", ->
       should -> testedPromise.reject()
-        .throw "trying to reject a promise containing result"
+        .throw /trying to reject a promise containing result.*/
     it "calling .rejectOne() throws an error", ->
       should -> testedPromise.rejectOne()
-        .throw "trying to reject a promise containing result"
+        .throw /trying to reject a promise containing result.*/
     it "calling .setResult(...) throws an error", ->
       should -> testedPromise.setResult {}
-        .throw "result already set"
+        .throw /result already set.*/
     it "calling .resolve() throws an error", ->
       should () -> testedPromise.resolve()
-        .throw "promise already resolved"
+        .throw /promise already resolved.*/
     it "calling .resolveOne() throws an error", ->
       should () -> testedPromise.resolveOne()
-        .throw "promise already resolved"
+        .throw /promise already resolved.*/
 
     it "resolves full promise chain", ->
       error = new Error "error"
@@ -317,10 +317,10 @@ describe "FakePromise", ->
 
       it "throws calling .then(...) second time", ->
         should -> testedPromise.then thenCallback
-          .throw new Error "promise already specified"
+          .throw /promise already specified.*/
       it "throws calling .catch(...) on the same promise", ->
         should -> testedPromise.catch thenCallback
-          .throw new Error "promise already specified"
+          .throw /promise already specified.*/
 
       it ".setResult(undefined).resolveOne() doesn't throw", ->
         testedPromise.setResult undefined
@@ -552,22 +552,22 @@ describe "FakePromise", ->
 
       it "calling .setResult(...) again throws an error", ->
         should -> testedPromise.setResult expectedResult
-          .throw "result already set"
+          .throw /result already set.*/
       it "calling .resolve(result) throws an error", ->
         should -> testedPromise.resolve expectedResult
-          .throw "result already set"
+          .throw /result already set.*/
       it "calling .resolveOne(result) throws an error", ->
         should -> testedPromise.resolveOne expectedResult
-          .throw "result already set"
+          .throw /result already set.*/
       it "calling .setError(...) throws an error", ->
         should -> testedPromise.setError new Error 'test'
-          .throw "trying to set error on a promise with result already set"
+          .throw /trying to set error on a promise with result already set.*/
       it "calling .reject() throws an error", ->
         should -> testedPromise.reject()
-          .throw "trying to reject a promise containing result"
+          .throw /trying to reject a promise containing result.*/
       it "calling .rejectOne() throws an error", ->
         should -> testedPromise.rejectOne()
-          .throw "trying to reject a promise containing result"
+          .throw /trying to reject a promise containing result.*/
 
       it "calling .resolve() does not throw", ->
         testedPromise.resolve()
@@ -586,22 +586,22 @@ describe "FakePromise", ->
 
       it "calling .setResult(...) again throws an error", ->
         should -> testedPromise.setResult expectedResult
-          .throw "result already set"
+          .throw /result already set.*/
       it "calling .resolve(result) throws an error", ->
         should -> testedPromise.resolve expectedResult
-          .throw "result already set"
+          .throw /result already set.*/
       it "calling .resolveOne(result) throws an error", ->
         should -> testedPromise.resolveOne expectedResult
-          .throw "result already set"
+          .throw /result already set.*/
       it "calling .setError(...) throws an error", ->
         should -> testedPromise.setError new Error 'test'
-          .throw "trying to set error on a promise with result already set"
+          .throw /trying to set error on a promise with result already set.*/
       it "calling .reject() throws an error", ->
         should -> testedPromise.reject()
-          .throw "trying to reject a promise containing result"
+          .throw /trying to reject a promise containing result.*/
       it "calling .rejectOne() throws an error", ->
         should -> testedPromise.rejectOne()
-          .throw "trying to reject a promise containing result"
+          .throw /trying to reject a promise containing result.*/
 
       it "calling .resolve() does not throw", ->
         testedPromise.resolve()
@@ -618,22 +618,22 @@ describe "FakePromise", ->
 
       it "calling .setError(...) again throws an error", ->
         should -> testedPromise.setError expectedError
-          .throw "error already set"
+          .throw /error already set.*/
       it "calling .reject(error) throws an error", ->
         should -> testedPromise.reject expectedError
-          .throw "error already set"
+          .throw /error already set.*/
       it "calling .rejectOne(error) throws an error", ->
         should -> testedPromise.rejectOne expectedError
-          .throw "error already set"
+          .throw /error already set.*/
       it "calling .setError(...) throws an error", ->
         should -> testedPromise.setResult {}
-          .throw "trying to set result on a promise with error already set"
+          .throw /trying to set result on a promise with error already set.*/
       it "calling .resolve() throws an error", ->
         should () -> testedPromise.resolve()
-          .throw "trying to resolve a promise containing error"
+          .throw /trying to resolve a promise containing error.*/
       it "calling .resolveOne() throws an error", ->
         should () -> testedPromise.resolveOne()
-          .throw "trying to resolve a promise containing error"
+          .throw /trying to resolve a promise containing error.*/
 
       it "calling .rejectOne() does not throw", ->
         testedPromise.rejectOne().resolveOne()
@@ -658,22 +658,22 @@ describe "FakePromise", ->
 
       it "calling .setError(...) again throws an error", ->
         should -> testedPromise.setError expectedError
-          .throw "error already set"
+          .throw /error already set.*/
       it "calling .reject(error) throws an error", ->
         should -> testedPromise.reject expectedError
-          .throw "error already set"
+          .throw /error already set.*/
       it "calling .rejectOne(error) throws an error", ->
         should -> testedPromise.rejectOne expectedError
-          .throw "error already set"
+          .throw /error already set.*/
       it "calling .setError(...) throws an error", ->
         should -> testedPromise.setResult {}
-          .throw "trying to set result on a promise with error already set"
+          .throw /trying to set result on a promise with error already set.*/
       it "calling .resolve() throws an error", ->
         should () -> testedPromise.resolve()
-          .throw "trying to resolve a promise containing error"
+          .throw /trying to resolve a promise containing error.*/
       it "calling .resolveOne() throws an error", ->
         should () -> testedPromise.resolveOne()
-          .throw "trying to resolve a promise containing error"
+          .throw /trying to resolve a promise containing error.*/
 
       it "calling .reject() does not throw", ->
         testedPromise.reject()

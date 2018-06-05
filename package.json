@@ -1,6 +1,6 @@
 {
   "name": "fake-promise",
-  "version": "2.1.3",
+  "version": "2.2.0",
   "description": "Promise with behavior controlled by .resolve(result) and .reject(error) methods.",
   "main": "index.js",
   "scripts": {

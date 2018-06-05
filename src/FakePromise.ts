@@ -45,28 +45,31 @@ export class FakePromise<T> implements Promise<T> {
   private resolved = false;
   private rejected = false;
 
+  private promiseTrace : string;
+  private resultTrace : string;
+  private errorTrace : string;
+  private specifyTrace : string;
+  private resolveTrace : string;
+  private rejectTrace : string;
+
   then<TResult1 = T, TResult2 = never>(
     onfulfilled ?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected ?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null
   ): Promise<TResult1 | TResult2> {
-    check(!this.specified, 'promise already specified');
+    check(!this.specified, 'promise already specified', this.specifyTrace);
 
     this.onfulfilled = onfulfilled;
     this.onrejected = onrejected;
     this.specified = true;
+    this.specifyTrace = trace('specification');
 
     return this.maybeFinishResolving();
   }
 
   catch<TResult = never>(
-    onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null
+    onrejected ?: ((reason: any) => TResult | PromiseLike<TResult>) | null
   ): Promise<T | TResult> {
-    check(!this.specified, 'promise already specified');
-
-    this.onrejected = onrejected;
-    this.specified = true;
-
-    return this.maybeFinishResolving();
+    return this.then<T, TResult>(undefined, onrejected);
   }
 
   /**
@@ -98,12 +101,26 @@ export class FakePromise<T> implements Promise<T> {
    * @post .resolve() and .resolveOne() can not be called with result argument
    */
   setResult(result : T | Promise<T>) : void {
-    check(!this.errorSet, 'trying to set result on a promise with error already set');
-    check(!this.resultSet, 'result already set');
-    check(!this.resultPromised, 'result already set (waiting for promise)');
+    check(
+      !this.errorSet,
+      'trying to set result on a promise with error already set',
+      this.errorTrace,
+    );
+    check(
+      !this.resultSet,
+      'result already set',
+      this.resultTrace,
+    );
+    check(
+      !this.resultPromised,
+      'result already set (waiting for promise)',
+      this.promiseTrace,
+    );
 
     if (isPromise(result)) {
       this.resultPromised = true;
+      this.promiseTrace = trace('setting promise as a result');
+
       result.then(
         result => {
           this.resultPromised = false;
@@ -119,6 +136,7 @@ export class FakePromise<T> implements Promise<T> {
 
     this.resultSet = true;
     this.result = result;
+    this.resultTrace = trace('setting result');
 
     this.maybeFinishResolving();
   }
@@ -132,13 +150,29 @@ export class FakePromise<T> implements Promise<T> {
    * @post .setError(), .setResult(), .resolve() and .resolveOne() can not be called
    */
   setError(error : any) : void {
-    check(!this.resultSet, 'trying to set error on a promise with result already set');
-    check(!this.errorSet, 'error already set');
-    check(!this.resultPromised, 'result already set (waiting for promise)');
-    check(error !== undefined && error !== null, 'error must not be undefined nor null');
+    check(
+      !this.resultSet,
+      'trying to set error on a promise with result already set',
+      this.resultTrace,
+    );
+    check(
+      !this.errorSet,
+      'error already set',
+      this.errorTrace,
+    );
+    check(
+      !this.resultPromised,
+      'result already set (waiting for promise)',
+      this.promiseTrace,
+    );
+    check(
+      hasValue(error),
+      'error must not be undefined nor null',
+    );
 
     this.errorSet = true;
     this.error = error;
+    this.errorTrace = trace('setting error');
 
     this.maybeFinishResolving();
   }
@@ -150,13 +184,17 @@ export class FakePromise<T> implements Promise<T> {
    * @post promise is resolved
    */
   resolveOne<TResult = never>(result ?: T | Promise<T>) : FakePromise<TResult> {
-    check(!this.errorSet, 'trying to resolve a promise containing error');
+    check(
+      !this.errorSet,
+      'trying to resolve a promise containing error',
+      this.errorTrace,
+    );
 
     if (result !== undefined) {
       this.setResult(result);
     }
     this.markResolved();
-    return this.maybeFinishResolving() ;
+    return this.maybeFinishResolving();
   }
 
   /**
@@ -167,7 +205,11 @@ export class FakePromise<T> implements Promise<T> {
    * @post promise is rejected
    */
   rejectOne<TResult = never>(error ?: any) : FakePromise<TResult> {
-    check(!this.resultSet, 'trying to reject a promise containing result');
+    check(
+      !this.resultSet,
+      'trying to reject a promise containing result',
+      this.resultTrace,
+    );
 
     if (error !== undefined) {
       this.setError(error);
@@ -197,15 +239,19 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   private markResolved() {
-    check(!this.resolved, 'promise already resolved');
-    check(!this.rejected, 'promise already rejected');
+    check(!this.resolved, 'promise already resolved', this.resolveTrace);
+    check(!this.rejected, 'promise already rejected', this.rejectTrace);
+
     this.resolved = true;
+    this.resolveTrace = trace('resolve');
   }
 
   private markRejected() {
-    check(!this.resolved, 'promise already resolved');
-    check(!this.rejected, 'promise already rejected');
+    check(!this.resolved, 'promise already resolved', this.resolveTrace);
+    check(!this.rejected, 'promise already rejected', this.rejectTrace);
+
     this.rejected = true;
+    this.rejectTrace = trace('reject');
   }
 
   private maybeFinishResolving() {
@@ -285,9 +331,9 @@ export class FakePromise<T> implements Promise<T> {
 
 export default FakePromise;
 
-function check(condition : boolean, message : string) {
+function check(condition : boolean, message : string, stacktrace ?: string) {
   if (!condition) {
-    throw new Error(message);
+    throw new Error(`${message}${stacktrace ? stacktrace : ''}`);
   }
 }
 
@@ -297,5 +343,20 @@ function hasValue(arg : any | null | undefined) {
 
 function isPromise<T>(arg : T | Promise<T>): arg is Promise<T> {
   return hasValue(arg) && typeof (arg as any).then === 'function';
+}
+
+function trace(name : string) {
+  const error = new Error('error');
+  const stack = error.stack as string;
+  const title = `stacktrace of ${name}`.toUpperCase();
+
+  const firstNewline = stack.indexOf('\n');
+  const secondNewline = stack.indexOf('\n', firstNewline + 1);
+
+  return `\n  ${title}:${stack.substring(secondNewline)}\n  EOS`
+    .split('\n')
+    .map(line => `  ${line}`)
+    .join('\n')
+  ;
 }
 
