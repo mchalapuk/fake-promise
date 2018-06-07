@@ -361,6 +361,59 @@ describe "FakePromise", ->
             callback.should.have.callCount 1
               .and.have.been.calledWith error
 
+    describe "when after .resolveOne(resultPromise)", ->
+      resultPromise = null
+      nextPromise = null
+
+      beforeEach ->
+        resultPromise = new FakePromise
+        nextPromise = testedPromise.resolveOne resultPromise
+        undefined
+
+      it "calling .then(callback) does nothing", ->
+        callback = sinon.spy()
+        testedPromise.then callback
+        callback.should.have.callCount 0
+
+      it "calling .catch(callback) does nothing", ->
+        callback = sinon.spy()
+        testedPromise.catch callback
+        callback.should.have.callCount 0
+
+      describe "and after resolving resultPromise", ->
+        result = {}
+
+        beforeEach ->
+          resultPromise.resolve result
+
+        it "calling .then(callback) calls the callback immediately", ->
+          callback = sinon.spy()
+          testedPromise.then callback
+          callback.should.have.callCount 1
+            .and.have.been.calledWith result
+
+        it "calling .catch(callback) does nothing", ->
+          callback = sinon.spy()
+          testedPromise.catch callback
+          callback.should.have.callCount 0
+
+      describe "and after rejecting resultPromise", ->
+        error = new Error "rejected"
+
+        beforeEach ->
+          resultPromise.reject error
+
+        it "calling .then(callback) does nothing", ->
+          callback = sinon.spy()
+          testedPromise.then callback
+          callback.should.have.callCount 0
+
+        it "calling .catch(callback) calls the callback immediately", ->
+          callback = sinon.spy()
+          testedPromise.catch callback
+          callback.should.have.callCount 1
+            .and.have.been.calledWith error
+
     describe "when after .then(onfulfilled) specified", ->
       thenCallback = null
       nextPromise = null

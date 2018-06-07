@@ -264,7 +264,11 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   private maybeFinishResolving() {
-    if (!this.specified || !(this.resolved || this.rejected)) {
+    if (
+      !this.specified
+      || !(this.resolved || this.rejected)
+      || this.resultPromised
+    ) {
       return this.getNextPromise();
     }
     if (this.errorSet) {
