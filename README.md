@@ -1,4 +1,4 @@
-# FAKEpromise :pray:
+# FakePromise :pray:
 
 [<img src="https://badge.fury.io/js/fake-promise.svg" alt="Current Version">][npm-status]
 [<img src="https://travis-ci.org/mchalapuk/fake-promise.svg?branch=master" alt="Build Status" />][travis-status]
@@ -16,7 +16,7 @@
 
 ## Why would I want it?
 
-* FAKEpromise is a single-class library without any run-time dependencies,
+* FakePromise is a single-class library without any run-time dependencies,
 * It provides a **fully functional implementation of Promise with additional testing utilities**,
 * Fine grained control of resolution of each promise in a chain (`.then(...).then(...)`),
 * Thoroughly unit-tested and field-tested in several commercial projects,
@@ -99,7 +99,7 @@ async function testedFunction(asyncFunctionDependency) {
 }
 
 /**
- * Tests of `testedFunction` using FAKEpromise.
+ * Tests of `testedFunction` using FakePromise.
  */
 describe('testedFunction(asyncDependency)', () => {
   let dependencyPromise;
