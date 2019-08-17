@@ -14,22 +14,28 @@
 
 [mdn-promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 
-## TL; DR
+## Why would I want it?
 
 * FAKEpromise is a single-class library without any run-time dependencies,
 * It provides a fully-functional **implementation of Promise with additional testing utilities**
 * Fine grained control of resolution of each promise in a chain (`.then(...).then(...)`),
 * Utilities for convenient resolution of whole promise chain at once,
 * Stores stack traces of promise specifications and resolutions (available for `console.log`),
-* Intended for use in unit tests (for production, please use [Bluebird][bluebird])
+* Intended for use in unit tests (for production, please use [Bluebird][bluebird]),
 * Thoroughly unit-tested and field-tested in several commercial projects,
 * Usable in modern JavaScript, TypeScript and CoffeeScript.
 
 [bluebird]: https://github.com/petkaantonov/bluebird
 
+## Documentation
+
+For full documentation, please see JSDoc comments in [FakePromise][FakePromise] class.
+
+[FakePromise]: /src/FakePromise.ts
+
 ```javascript
 /**
- * Documentation TL; DR
+ * TL; DR
  */
 export class FakePromise<T> implements Promise<T> {
   // create already resolved/rejected instances of FakePromise (will resolve whole chain)
