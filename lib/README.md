@@ -78,8 +78,11 @@ export class FakePromise<T> implements Promise<T> {
   setError(error : any) : void;
 }
 ```
-## Minimal Example
+## (Not So) Minimal Example
+
 ```javascript
+import FakePromise from 'fake-promise';
+
 /**
  * Async function to be tested.
  *
