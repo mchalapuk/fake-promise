@@ -46,23 +46,31 @@ export class FakePromise<T> implements Promise<T> {
   private resolved = false;
   private rejected = false;
 
-  private promiseTrace : string;
-  private resultTrace : string;
-  private errorTrace : string;
-  private specifyTrace : string;
-  private resolveTrace : string;
-  private rejectTrace : string;
+  private _promiseTrace : string;
+  private _resultTrace : string;
+  private _errorTrace : string;
+  private _specifyTrace : string;
+  private _resolveTrace : string;
+  private _rejectTrace : string;
+
+  // intended for printing with console.log
+  get promiseTrace() : string { return this._promiseTrace; }
+  get resultTrace() : string { return this._resultTrace; }
+  get errorTrace() : string { return this._errorTrace; }
+  get specifyTrace() : string { return this._specifyTrace; }
+  get resolveTrace() : string { return this._resolveTrace; }
+  get rejectTrace() : string { return this._rejectTrace; }
 
   then<TResult1 = T, TResult2 = never>(
     onfulfilled ?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected ?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null
   ): Promise<TResult1 | TResult2> {
-    this.check(!this.specified, 'promise already specified', this.specifyTrace);
+    this.check(!this.specified, 'promise already specified', this._specifyTrace);
 
     this.onfulfilled = onfulfilled;
     this.onrejected = onrejected;
     this.specified = true;
-    this.specifyTrace = this.trace('specification');
+    this._specifyTrace = this.trace('specification');
 
     return this.maybeFinishResolving();
   }
@@ -105,22 +113,22 @@ export class FakePromise<T> implements Promise<T> {
     this.check(
       !this.errorSet,
       'trying to set result on a promise with error already set',
-      this.errorTrace,
+      this._errorTrace,
     );
     this.check(
       !this.resultSet,
       'result already set',
-      this.resultTrace,
+      this._resultTrace,
     );
     this.check(
       !this.resultPromised,
       'result already set (waiting for promise)',
-      this.promiseTrace,
+      this._promiseTrace,
     );
 
     if (isPromise(result)) {
       this.resultPromised = true;
-      this.promiseTrace = this.trace('setting promise as a result');
+      this._promiseTrace = this.trace('setting promise as a result');
 
       result.then(
         result => {
@@ -137,7 +145,7 @@ export class FakePromise<T> implements Promise<T> {
 
     this.resultSet = true;
     this.result = result;
-    this.resultTrace = this.trace('setting result');
+    this._resultTrace = this.trace('setting result');
 
     this.maybeFinishResolving();
   }
@@ -154,17 +162,17 @@ export class FakePromise<T> implements Promise<T> {
     this.check(
       !this.resultSet,
       'trying to set error on a promise with result already set',
-      this.resultTrace,
+      this._resultTrace,
     );
     this.check(
       !this.errorSet,
       'error already set',
-      this.errorTrace,
+      this._errorTrace,
     );
     this.check(
       !this.resultPromised,
       'result already set (waiting for promise)',
-      this.promiseTrace,
+      this._promiseTrace,
     );
     this.check(
       hasValue(error),
@@ -173,7 +181,7 @@ export class FakePromise<T> implements Promise<T> {
 
     this.errorSet = true;
     this.error = error;
-    this.errorTrace = this.trace('setting error');
+    this._errorTrace = this.trace('setting error');
 
     this.maybeFinishResolving();
   }
@@ -188,7 +196,7 @@ export class FakePromise<T> implements Promise<T> {
     this.check(
       !this.errorSet,
       'trying to resolve a promise containing error',
-      this.errorTrace,
+      this._errorTrace,
     );
 
     if (result !== undefined) {
@@ -209,7 +217,7 @@ export class FakePromise<T> implements Promise<T> {
     this.check(
       !this.resultSet,
       'trying to reject a promise containing result',
-      this.resultTrace,
+      this._resultTrace,
     );
 
     if (error !== undefined) {
@@ -248,19 +256,19 @@ export class FakePromise<T> implements Promise<T> {
   }
 
   private markResolved() {
-    this.check(!this.resolved, 'promise already resolved', this.resolveTrace);
-    this.check(!this.rejected, 'promise already rejected', this.rejectTrace);
+    this.check(!this.resolved, 'promise already resolved', this._resolveTrace);
+    this.check(!this.rejected, 'promise already rejected', this._rejectTrace);
 
     this.resolved = true;
-    this.resolveTrace = this.trace('resolve');
+    this._resolveTrace = this.trace('resolve');
   }
 
   private markRejected() {
-    this.check(!this.resolved, 'promise already resolved', this.resolveTrace);
-    this.check(!this.rejected, 'promise already rejected', this.rejectTrace);
+    this.check(!this.resolved, 'promise already resolved', this._resolveTrace);
+    this.check(!this.rejected, 'promise already rejected', this._rejectTrace);
 
     this.rejected = true;
-    this.rejectTrace = this.trace('reject');
+    this._rejectTrace = this.trace('reject');
   }
 
   private maybeFinishResolving() {
