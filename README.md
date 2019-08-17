@@ -17,7 +17,7 @@
 ## Why would I want it?
 
 * FAKEpromise is a single-class library without any run-time dependencies,
-* It provides a fully functional **implementation of Promise with additional testing utilities**,
+* It provides a **fully functional implementation of Promise with additional testing utilities**,
 * Fine grained control of resolution of each promise in a chain (`.then(...).then(...)`),
 * Thoroughly unit-tested and field-tested in several commercial projects,
 * Usable in modern JavaScript, TypeScript and CoffeeScript.
