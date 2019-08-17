@@ -26,6 +26,24 @@ This package is intended for use in unit tests. For production, please use [Blue
 
 [bluebird]: https://github.com/petkaantonov/bluebird
 
+## Installation
+
+```shell
+npm install --save-dev fake-promise
+```
+
+## Usage
+
+### Loading FakePromise Class
+
+```javascript
+// node-style require
+const { FakePromise } = require('fake-promise');
+
+// es6-style default import
+import FakePromise from 'fake-promise';
+```
+
 ## Documentation
 
 For full documentation, please see JSDoc comments in [FakePromise][FakePromise] class.
