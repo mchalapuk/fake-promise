@@ -32,9 +32,7 @@ This package is intended for use in unit tests. For production, please use [Blue
 npm install --save-dev fake-promise
 ```
 
-## Usage
-
-### Loading FakePromise Class
+## Loading
 
 ```javascript
 // node-style require
@@ -165,18 +163,11 @@ describe('testedFunction(asyncDependency)', () => {
 
 ## Debugging Techniques
 
-Debugging problems in asynchronuous code may be tedious. In order to facilitate
-this task, FakePromise provides additional utilities.
-
 ### Printing Stack Traces
 
-FakePromise stores stack traces of all promise specifications (calls to
-`.then(...)` and `.catch(...)`), result provistions (calls to `setResult(...)`
-and `.setError(...)`) and promise resolutions (calls to all versions of
-`.resolve(...)` and `.reject(...)`).
-
-When debugging a test, it may be helpful to `console.log` one or more traces
-stored inside an instance of FakePromise.
+FakePromise stores stack traces of all promise specifications, result
+provisions and promise resolutions. When debugging a test, it may be helpful
+to `console.log` one or more traces stored inside an instance of FakePromise.
 
 ```javascript
 // print stack trace of call to `.then(...)` or `.catch`
@@ -204,7 +195,7 @@ FakePromise implements `.toString()` method which provides information about
 internal state of FakePromise instance. When encountering problems with
 debugging async code, printing used instance of FakePromise may prove helpful.
 
-```javascript```
+```javascript
 console.log(fakePromise);
 ```
 
