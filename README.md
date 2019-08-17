@@ -204,5 +204,5 @@ console.log(fakePromise);
 
 ## License
 
-Copyright &copy; 2018 - 2019 Maciej Chałapuk. Released under [MIT license](LICENSE).
+Copyright &copy; 2017 - 2019 Maciej Chałapuk. Released under [MIT license](LICENSE).
 
