@@ -61,6 +61,8 @@ export class FakePromise<T> implements Promise<T> {
   get resolveTrace() : string { return this._resolveTrace; }
   get rejectTrace() : string { return this._rejectTrace; }
 
+  readonly [Symbol.toStringTag]: "promise";
+
   then<TResult1 = T, TResult2 = never>(
     onfulfilled ?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected ?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null

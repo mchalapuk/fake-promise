@@ -22,7 +22,7 @@
 * Thoroughly unit-tested and field-tested in several commercial projects,
 * Usable in modern JavaScript, TypeScript and CoffeeScript.
 
-This package is intended for use in unit tests. For production, please use [Bluebird][bluebird]).
+This package is intended for use in unit tests. For production, please use [Bluebird][bluebird].
 
 [bluebird]: https://github.com/petkaantonov/bluebird
 

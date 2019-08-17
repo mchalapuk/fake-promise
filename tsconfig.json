@@ -7,7 +7,8 @@
     "lib": [
       "ES5",
       "ES2015.Core",
-      "ES2015.Promise"
+      "ES2015.Promise",
+      "ES2016"
     ],
     "module": "commonjs",
     "moduleResolution": "Node",
