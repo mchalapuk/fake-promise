@@ -17,13 +17,12 @@
 ## Why would I want it?
 
 * FAKEpromise is a single-class library without any run-time dependencies,
-* It provides a fully-functional **implementation of Promise with additional testing utilities**
+* It provides a fully functional **implementation of Promise with additional testing utilities**,
 * Fine grained control of resolution of each promise in a chain (`.then(...).then(...)`),
-* Utilities for convenient resolution of whole promise chain at once,
-* Stores stack traces of promise specifications and resolutions (available for `console.log`),
-* Intended for use in unit tests (for production, please use [Bluebird][bluebird]),
 * Thoroughly unit-tested and field-tested in several commercial projects,
 * Usable in modern JavaScript, TypeScript and CoffeeScript.
+
+This package is intended for use in unit tests. For production, please use [Bluebird][bluebird]).
 
 [bluebird]: https://github.com/petkaantonov/bluebird
 
@@ -56,7 +55,7 @@ export class FakePromise<T> implements Promise<T> {
   // resolve/reject single promise in a chain and return next promise from the chain
   resolveOne<U = void>(result ?: T | Promise<T>) : FakePromise<U>;
   rejectOne<U = void>(error ?: any) : FakePromise<U>;
-  
+
   // set result/error of a promise without resolving/rejecting
   // (to call resolve without arguments afterwards)
   setResult(result : T | Promise<T>) : void;
@@ -67,7 +66,7 @@ export class FakePromise<T> implements Promise<T> {
 ```javascript
 /**
  * Async function to be tested.
- * 
+ *
  * It calls `asyncFunctionDependency`, waits for it's promise
  * to be resolved, and returns the result of resolved promise.
  */
@@ -79,7 +78,7 @@ async function testedFunction(asyncFunctionDependency) {
     throw e;
   }
 }
- 
+
 /**
  * Tests of `testedFunction` using FAKEpromise.
  */
@@ -87,41 +86,41 @@ describe('testedFunction(asyncDependency)', () => {
   let dependencyPromise;
   let asyncDependency;
   let resultPromise;
-  
+
   beforeEach(() => {
     // program `asyncDependency` to return a fresh instance of FakePromise
     dependencyPromise = new FakePromise();
     asyncDependency = sinon.stub().returns(dependencyPromise);
-    
+
     resultPromise = testedFunction(asyncDependency);
-    
+
     // At this point `dependencyPromise` is not yet resolved,
     // so `resultPromise` isn't also.
   });
-    
+
   describe('when after resolving dependency promise', () => {
     const expectedResult = "result";
-    
+
     beforeEach(end => {
       // could be also .resolveOne
       dependencyPromise.resolve(expectedResult);
-      
+
       // At this point `dependencyPromise` is resolved, `resultPromise` is not.
       // `setImmediate` is needed in order to wait single tick
       // for resolution of implicit promise created by `await` keyword.
       // `resultPromise` will be resolved before `end` is called.
       setImmediate(end);
     });
-    
+
     it('resolves result promise', () => {
       // Returning promise so that the test will fail if promise is rejected.
       return resultPromise.then(result => result.should.eql(expectedResult));
     });
   });
-    
+
   describe('when after rejecting dependency promise', () => {
     const expectedError = new Error("fail");
-    
+
     beforeEach(end => {
       // could be also .rejectOne
       dependencyPromise.reject(expectedError);
@@ -132,7 +131,7 @@ describe('testedFunction(asyncDependency)', () => {
       // `resultPromise` will be rejected before `end` is called.
       setImmediate(end);
     });
-    
+
     it('rejects result promise', () => {
       // Testing rejection is tricky as both resolution and rejection cases
       // must be tested in callbacks of the same promise instance
@@ -144,6 +143,51 @@ describe('testedFunction(asyncDependency)', () => {
     });
   });
 });
+```
+
+## Debugging Techniques
+
+Debugging problems in asynchronuous code may be tedious. In order to facilitate
+this task, FakePromise provides additional utilities.
+
+### Printing Stack Traces
+
+FakePromise stores stack traces of all promise specifications (calls to
+`.then(...)` and `.catch(...)`), result provistions (calls to `setResult(...)`
+and `.setError(...)`) and promise resolutions (calls to all versions of
+`.resolve(...)` and `.reject(...)`).
+
+When debugging a test, it may be helpful to `console.log` one or more traces
+stored inside an instance of FakePromise.
+
+```javascript
+// print stack trace of call to `.then(...)` or `.catch`
+console.log(fakePromise.specifyTrace);
+
+// print stack trace of call to `.resove(...)`
+console.log(fakePromise.resolveTrace);
+
+// print stack trace of call to `.reject(...)`
+console.log(fakePromise.rejectTrace);
+
+// print stack trace of calls to `.setResult(...)`
+console.log(fakePromise.resultTrace);
+
+// print stack trace of calls to `.setResult(Promise)`
+console.log(fakePromise.promiseTrace);
+
+// print stack trace of calls to `.setError(...)`
+console.log(fakePromise.errorTrace);
+```
+
+### Using `.toString()`
+
+FakePromise implements `.toString()` method which provides information about
+internal state of FakePromise instance. When encountering problems with
+debugging async code, printing used instance of FakePromise may prove helpful.
+
+```javascript```
+console.log(fakePromise);
 ```
 
 ## License
