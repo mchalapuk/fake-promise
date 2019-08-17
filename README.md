@@ -166,8 +166,8 @@ describe('testedFunction(asyncDependency)', () => {
 ### Printing Stack Traces
 
 FakePromise stores stack traces of all promise specifications, result
-provisions and promise resolutions. When debugging a test, it may be helpful
-to `console.log` one or more traces stored inside an instance of FakePromise.
+provisions and promise resolutions. When debugging problems with tests,
+it may be helpful to `console.log` one or more of stored traces.
 
 ```javascript
 // print stack trace of call to `.then(...)` or `.catch`
