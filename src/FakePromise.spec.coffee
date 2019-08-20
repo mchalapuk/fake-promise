@@ -265,22 +265,16 @@ describe "FakePromise", ->
         nextPromise = testedPromise.resolveOne()
         undefined
 
-      describe "and after calling .setResult(result)", ->
-        result = "result"
+      it "calling .then(callback) calls the callback immediately", ->
+        callback = sinon.spy()
+        testedPromise.then callback
+        callback.should.have.callCount 1
+          .and.have.been.calledWith undefined
 
-        beforeEach ->
-          testedPromise.setResult result
-
-        it "calling .then(callback) calls the callback immediately", ->
-          callback = sinon.spy()
-          testedPromise.then callback
-          callback.should.have.callCount 1
-            .and.have.been.calledWith result
-
-        it "calling .catch(callback) does nothing", ->
-          callback = sinon.spy()
-          testedPromise.catch callback
-          callback.should.have.callCount 0
+      it "calling .catch(callback) does nothing", ->
+        callback = sinon.spy()
+        testedPromise.catch callback
+        callback.should.have.callCount 0
 
     describe "when after .resolveOne() with resolved promise as result", ->
       nextPromise = null
@@ -803,7 +797,9 @@ describe "FakePromise", ->
         testedPromise.setResult expectedResult
 
       it "calling .resolveOne() and .then() resolves the promise", ->
-        testedPromise.resolveOne().resolveOne()
+        testedPromise
+          .resolveOne()
+          .resolveOne()
         testedPromise.then (result) -> (should result).equal expectedResult
       it "calling .resolve() and .then() resolves the promise", ->
         testedPromise.resolve()
@@ -813,7 +809,9 @@ describe "FakePromise", ->
       expectedResult = undefined
 
       it "calling .resolveOne() and .then() resolves the promise", ->
-        testedPromise.resolveOne().resolveOne()
+        testedPromise
+          .resolveOne()
+          .resolveOne()
         testedPromise.then (result) -> (should result).equal expectedResult
       it "calling .resolve() and .then() resolves the promise", ->
         testedPromise.resolve()

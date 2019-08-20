@@ -38,6 +38,7 @@ export class FakePromise<T> implements Promise<T> {
 
   private id = nextId++;
 
+  private isNext = false;
   private resultPromised = false;
   private resolveChain = false;
   private resultSet = false;
@@ -201,9 +202,15 @@ export class FakePromise<T> implements Promise<T> {
       this._errorTrace,
     );
 
-    if (result !== undefined) {
-      this.setResult(result);
+    if (this.isNext) {
+      this.check(
+        result === undefined,
+        "result musn't be programmatically set in a chained promise",
+      );
+    } else if (result !== undefined || !this.resultSet) {
+      this.setResult(result as T);
     }
+
     this.markResolved();
     return this.maybeFinishResolving();
   }
@@ -222,10 +229,14 @@ export class FakePromise<T> implements Promise<T> {
       this._resultTrace,
     );
 
-    if (error !== undefined) {
+    if (this.isNext) {
+      this.check(
+        error === undefined,
+        "error musn't be programmatically set in a chained promise",
+      );
+    } else if (error !== undefined || !this.errorSet) {
       this.setError(error);
     }
-    this.check(this.errorSet, 'error must not be undefined nor null');
 
     this.markRejected();
     return this.maybeFinishResolving();
@@ -284,18 +295,10 @@ export class FakePromise<T> implements Promise<T> {
     if (this.errorSet) {
       return this.doReject();
     }
-    // TRADEOFF: Resolving even if this.resultSet is false.
-    //
-    // Upsides:
-    // * Calling .resolve() without result argument and without
-    //  previously calling .setResult(undefined) is possible.
-    //
-    // Downsides:
-    // * This.result may be undefined at this point
-    //  which may not be compatible with T.
-    // * Setting result after calling .resolve() is possible but only
-    //  before the promise is specified (.then() or .catch() is called).
-    return this.doResolve();
+    if (this.resultSet) {
+      return this.doResolve();
+    }
+    return this.getNextPromise();
   }
 
   private doResolve() {
@@ -320,26 +323,27 @@ export class FakePromise<T> implements Promise<T> {
     try {
       return this.setNextResult(callback(arg as any));
     } catch (e) {
+      if (e.name === 'FakePromiseError') {
+        throw e;
+      }
       return this.setNextError(e);
     }
   }
 
   private setNextResult(result : any) {
     const next = this.getNextPromise();
+    next.setResult(result);
     if (this.resolveChain) {
-      next.resolve(result);
-    } else {
-      next.setResult(result);
+      next.resolve();
     }
     return next;
   }
 
   private setNextError(error : any) {
     const next = this.getNextPromise();
+    next.setError(error);
     if (this.resolveChain) {
-      next.reject(error);
-    } else {
-      next.setError(error);
+      next.reject();
     }
     return next;
   }
@@ -347,6 +351,7 @@ export class FakePromise<T> implements Promise<T> {
   private getNextPromise() {
     if (!this.nextPromise) {
       this.nextPromise = new FakePromise<any>();
+      this.nextPromise.isNext = true;
     }
     return this.nextPromise;
   }
@@ -354,7 +359,9 @@ export class FakePromise<T> implements Promise<T> {
   private check(condition : boolean, message : string, stacktrace ?: string) {
     if (!condition) {
       const formattedState = `\n    CURRENT STATE:\n${this.toString(6)}`;
-      throw new Error(`${message}${formattedState}${stacktrace ? stacktrace : ''}`);
+      const error = new Error(`${message}${formattedState}${stacktrace ? stacktrace : ''}`);
+      error.name = 'FakePromiseError';
+      throw error;
     }
   }
 
