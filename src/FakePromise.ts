@@ -38,7 +38,7 @@ export class FakePromise<T> implements Promise<T> {
 
   private id = nextId++;
 
-  private isNext = false;
+  private isChained = false;
   private resultPromised = false;
   private resolveChain = false;
   private resultSet = false;
@@ -114,43 +114,10 @@ export class FakePromise<T> implements Promise<T> {
    */
   setResult(result : T | Promise<T>) : void {
     this.check(
-      !this.errorSet,
-      'trying to set result on a promise with error already set',
-      this._errorTrace,
+      !this.isChained,
+      "result musn't be programmatically set in a chained promise",
     );
-    this.check(
-      !this.resultSet,
-      'result already set',
-      this._resultTrace,
-    );
-    this.check(
-      !this.resultPromised,
-      'result already set (waiting for promise)',
-      this._promiseTrace,
-    );
-
-    if (isPromise(result)) {
-      this.resultPromised = true;
-      this._promiseTrace = this.trace('setting promise as a result');
-
-      result.then(
-        result => {
-          this.resultPromised = false;
-          this.setResult(result);
-        },
-        error => {
-          this.resultPromised = false;
-          this.setError(error);
-        },
-      );
-      return;
-    }
-
-    this.resultSet = true;
-    this.result = result;
-    this._resultTrace = this.trace('setting result');
-
-    this.maybeFinishResolving();
+    this._setResult(result);
   }
 
   /**
@@ -163,30 +130,10 @@ export class FakePromise<T> implements Promise<T> {
    */
   setError(error : any) : void {
     this.check(
-      !this.resultSet,
-      'trying to set error on a promise with result already set',
-      this._resultTrace,
+      !this.isChained,
+      "error musn't be programmatically set in a chained promise",
     );
-    this.check(
-      !this.errorSet,
-      'error already set',
-      this._errorTrace,
-    );
-    this.check(
-      !this.resultPromised,
-      'result already set (waiting for promise)',
-      this._promiseTrace,
-    );
-    this.check(
-      hasValue(error),
-      'error must not be undefined nor null',
-    );
-
-    this.errorSet = true;
-    this.error = error;
-    this._errorTrace = this.trace('setting error');
-
-    this.maybeFinishResolving();
+    this._setError(error);
   }
 
   /**
@@ -202,13 +149,13 @@ export class FakePromise<T> implements Promise<T> {
       this._errorTrace,
     );
 
-    if (this.isNext) {
+    if (this.isChained) {
       this.check(
         result === undefined,
         "result musn't be programmatically set in a chained promise",
       );
     } else if (result !== undefined || !this.resultSet) {
-      this.setResult(result as T);
+      this._setResult(result as T);
     }
 
     this.markResolved();
@@ -229,13 +176,13 @@ export class FakePromise<T> implements Promise<T> {
       this._resultTrace,
     );
 
-    if (this.isNext) {
+    if (this.isChained) {
       this.check(
         error === undefined,
         "error musn't be programmatically set in a chained promise",
       );
     } else if (error !== undefined || !this.errorSet) {
-      this.setError(error);
+      this._setError(error);
     }
 
     this.markRejected();
@@ -262,6 +209,75 @@ export class FakePromise<T> implements Promise<T> {
     const prefix = SPACES.substring(0, indent);
     const stringifiedFlags = keys.map(key => `${prefix}  ${key}: ${flags[key]},\n`);
     return `${prefix}FakePromise#${this.id} {\n${stringifiedFlags.join('')}${prefix}}`;
+  }
+
+  private _setResult(result : T | Promise<T>) : void {
+    this.check(
+      !this.errorSet,
+      'trying to set result on a promise with error already set',
+      this._errorTrace,
+    );
+    this.check(
+      !this.resultSet,
+      'result already set',
+      this._resultTrace,
+    );
+    this.check(
+      !this.resultPromised,
+      'result already set (waiting for promise)',
+      this._promiseTrace,
+    );
+
+    if (isPromise(result)) {
+      this.resultPromised = true;
+      this._promiseTrace = this.trace('setting promise as a result');
+
+      result.then(
+        result => {
+          this.resultPromised = false;
+          this._setResult(result);
+        },
+        error => {
+          this.resultPromised = false;
+          this._setError(error);
+        },
+      );
+      return;
+    }
+
+    this.resultSet = true;
+    this.result = result;
+    this._resultTrace = this.trace('setting result');
+
+    this.maybeFinishResolving();
+  }
+
+  private _setError(error : any) : void {
+    this.check(
+      !this.resultSet,
+      'trying to set error on a promise with result already set',
+      this._resultTrace,
+    );
+    this.check(
+      !this.errorSet,
+      'error already set',
+      this._errorTrace,
+    );
+    this.check(
+      !this.resultPromised,
+      'result already set (waiting for promise)',
+      this._promiseTrace,
+    );
+    this.check(
+      hasValue(error),
+      'error must not be undefined nor null',
+    );
+
+    this.errorSet = true;
+    this.error = error;
+    this._errorTrace = this.trace('setting error');
+
+    this.maybeFinishResolving();
   }
 
   private markResolveChain() {
@@ -332,7 +348,7 @@ export class FakePromise<T> implements Promise<T> {
 
   private setNextResult(result : any) {
     const next = this.getNextPromise();
-    next.setResult(result);
+    next._setResult(result);
     if (this.resolveChain) {
       next.resolve();
     }
@@ -341,7 +357,7 @@ export class FakePromise<T> implements Promise<T> {
 
   private setNextError(error : any) {
     const next = this.getNextPromise();
-    next.setError(error);
+    next._setError(error);
     if (this.resolveChain) {
       next.reject();
     }
@@ -351,7 +367,7 @@ export class FakePromise<T> implements Promise<T> {
   private getNextPromise() {
     if (!this.nextPromise) {
       this.nextPromise = new FakePromise<any>();
-      this.nextPromise.isNext = true;
+      this.nextPromise.isChained = true;
     }
     return this.nextPromise;
   }
