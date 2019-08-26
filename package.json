@@ -9,7 +9,7 @@
     "compile-coffee": "coffee -c -m -o lib src",
     "compile": "npm run compile-coffee && npm run compile-ts",
     "test": "mocha --use_strict lib/mocha.config.js $(find lib -name \"*.spec.js\")",
-    "copy-assets": "cp package*.json lib/ && cp README.md lib/",
+    "copy-assets": "cp package*.json lib/ && cp README.md lib/ && cp LICENSE lib/",
     "build": "npm run compile && npm test && npm run copy-assets",
     "clean-build": "npm run clean && npm run build",
     "deploy": "npm install && npm run clean-build && cd lib && npm publish"
