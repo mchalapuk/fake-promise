@@ -84,6 +84,14 @@ export class FakePromise<T> implements Promise<T> {
     return this.then<T, TResult>(undefined, onrejected);
   }
 
+  finally(onfinally ?: (() => void) | null): Promise<T> {
+    const callback = onfinally || noop;
+
+    // Declaration in TypeScript library file is wrong. This method should
+    // return Promise<void>. Casting to any in order to satisfy the interface.
+    return this.then(callback, callback) as any;
+  }
+
   /**
    * @param result with which promise will be resolved
    * @pre promise is not rejected or resolved
@@ -409,4 +417,6 @@ function hasValue(arg : any | null | undefined) {
 function isPromise<T>(arg : T | Promise<T>): arg is Promise<T> {
   return hasValue(arg) && typeof (arg as any).then === 'function';
 }
+
+function noop() {}
 

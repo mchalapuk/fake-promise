@@ -61,8 +61,9 @@ export class FakePromise<T> implements Promise<T> {
   constructor() {}
 
   // promise specification methods (standard ES promise interface)
-  then<U>(onresolved : Callback<U>, onrejected ?: Callback<any>) : FakePromise<U>;
-  catch(onrejected : Callback<any>) : FakePromise<any>;
+  then<U>(onresolved : Callback<U>, onrejected ?: Callback<any>) : Promise<U>;
+  catch(onrejected : Callback<any>) : Promise<any>;
+  finally(onfulfilled : Callback<void>) : Promise<void>;
 
   // resolve/reject full promise chain
   resolve(result ?: T | Promise<T>) : void;

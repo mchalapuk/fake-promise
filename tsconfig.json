@@ -6,9 +6,9 @@
     "forceConsistentCasingInFileNames": true,
     "lib": [
       "ES5",
-      "ES2015.Core",
-      "ES2015.Promise",
-      "ES2016"
+      "ES2015.Symbol",
+      "ES2015.Symbol.Wellknown",
+      "ES2018.Promise"
     ],
     "module": "commonjs",
     "moduleResolution": "Node",
