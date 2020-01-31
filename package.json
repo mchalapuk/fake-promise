@@ -39,7 +39,7 @@
   },
   "homepage": "https://github.com/mchalapuk/fake-promise#readme",
   "devDependencies": {
-    "coffeescript": "^2.5.0",
+    "coffeescript": "^2.5.1",
     "colors": "^1.4.0",
     "mocha": "^7.0.1",
     "should": "^13.2.3",
